@@ -1,0 +1,3 @@
+[submodule "sui"]
+	path = sui
+	url = git@github.com:FuzzingLabs/sui.git

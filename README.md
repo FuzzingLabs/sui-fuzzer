@@ -1,0 +1,5 @@
+# Sui Fuzzer
+
+```bash
+$ make
+```
