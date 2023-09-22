@@ -109,10 +109,9 @@ impl SuiRunner {
 
 impl Runner for SuiRunner {
 
-    fn execute(&mut self) -> Result<Option<Vec<Coverage>>, String> {
+    fn execute(&mut self) -> Result<Option<Vec<Coverage>>, (Vec<Coverage>, String)> {
         let mut remote_view = RemoteStore::new();
-        remote_view.add_module(self.module.clone());
-        let mut session = self.move_vm.new_session(&remote_view);
+        remote_view.add_module(self.module.clone()); let mut session = self.move_vm.new_session(&remote_view);
 
         let ty_args = vec![]
             .into_iter()
@@ -145,7 +144,7 @@ impl Runner for SuiRunner {
             );
         match result {
             Ok(_values) => Ok(Some(Self::create_coverage(coverage))),
-            Err(err) => Err(err.message().unwrap().to_string())
+            Err(err) => Err((Self::create_coverage(coverage), err.message().unwrap().to_string()))
         }
     }
 }

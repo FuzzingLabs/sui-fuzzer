@@ -117,7 +117,7 @@ impl Fuzzer {
 
             // Run ui
             if self.config.use_ui {
-                if self.ui.as_mut().unwrap().render(&self.global_stats, &events) {
+                if self.ui.as_mut().unwrap().render(&self.global_stats, &events, &self.threads_stats) {
                     self.ui.as_mut().unwrap().restore_terminal();
                     break;
                 }
