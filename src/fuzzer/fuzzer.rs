@@ -42,7 +42,7 @@ impl Fuzzer {
     }
 
     fn start_threads(&mut self) {
-        for _i in 0..self.config.nb_threads {
+        for i in 0..self.config.nb_threads {
             // Creates the communication channel for the fuzzer and worker sides
             let (fuzzer, worker) = bichannel::channel::<u8, WorkerEvent>();
             self.channels.push(fuzzer);
@@ -51,8 +51,8 @@ impl Fuzzer {
             // Change here the runner you want to create
             if let Some(parameter) = &self.config.runner_parameter {
                 let runner = Box::new(SuiRunner::new(&parameter.clone()));
-                let seed = self.config.seed.unwrap();
-                let mutator = Box::new(SuiMutator::new(seed, 20));
+                let seed = self.config.seed.unwrap() + (i as u64);
+                let mutator = Box::new(SuiMutator::new(seed, 11));
                 std::thread::spawn(move || {
                     // Creates generic worker and starts it
                     let mut w = Worker::new(worker, stats, runner, mutator, seed);

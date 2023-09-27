@@ -216,8 +216,10 @@ impl Ui {
                 .direction(Direction::Horizontal)
                 .split(area);
 
-            eprintln!("{:?}", (stats.time_running as f64, stats.execs_per_sec as f64));
             execs_speeds.push((stats.time_running as f64, stats.execs_per_sec as f64));
+
+            let min = execs_speeds.iter().fold(execs_speeds[0].1, |min, &x| if x.1 < min { x.1 } else { min });
+            let max = execs_speeds.iter().fold(execs_speeds[0].1, |max, &x| if x.1 > max { x.1 } else { max });
 
             let datasets = vec![
                 Dataset::default()
@@ -227,20 +229,27 @@ impl Ui {
                     .data(&execs_speeds),
             ];
 
+
+            let binding1 = (max as u64).to_string();
+            let binding_max = binding1.bold();
+            let binding2 = ((max / 2.0) as u64).to_string();
+            let binding_mid = binding2.bold();
+            let binding3 = (min as u64).to_string();
+            let binding_min = binding3.bold();
             let chart = Chart::new(datasets)
                 .x_axis(
                     Axis::default()
                     .title("Time")
                     .style(Style::default().fg(Color::Gray))
                     // .labels(x_labels)
-                    .bounds([0.0, 100.0]),
+                    .bounds([0.0, stats.time_running as f64]),
                     )
                 .y_axis(
                     Axis::default()
                     .title("Execs/s")
                     .style(Style::default().fg(Color::Gray))
-                    .labels(vec!["100000".bold(), "500000".into(), "1000000".bold()])
-                    .bounds([100000.0, 1000000.0]),
+                    .labels(vec![binding_min, binding_mid, binding_max])
+                    .bounds([min, max]),
                     );
             frame.render_widget(chart, chunks[0]);
         }

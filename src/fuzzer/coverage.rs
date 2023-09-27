@@ -1,6 +1,6 @@
 use std::hash::{Hash, Hasher};
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Debug)]
 pub struct Coverage {
     pub input: Vec<u8>,
     pub data: Vec<CoverageData>
@@ -16,3 +16,11 @@ impl Hash for Coverage {
         self.data.hash(state);
     }
 }
+
+impl PartialEq for Coverage {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
+    }
+}
+
+impl Eq for Coverage {}

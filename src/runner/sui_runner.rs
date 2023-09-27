@@ -125,35 +125,6 @@ impl Runner for SuiRunner {
 
         let mut coverage = vec![];
 
-        // let ty_args = vec![]
-        //     .into_iter()
-        //     .map(|tag| session.load_type(&tag))
-        //     .collect::<VMResult<_>>().unwrap();
-        //
-        // let args = vec![MoveValue::Vector(vec![
-        //                                   MoveValue::U8(0x66u8),
-        //                                   MoveValue::U8(0x75u8),
-        //                                   MoveValue::U8(0x7au8),
-        //                                   MoveValue::U8(0x7au8),
-        //                                   MoveValue::U8(0x69u8),
-        //                                   MoveValue::U8(0x6eu8),
-        //                                   MoveValue::U8(0x67u8),
-        //                                   MoveValue::U8(0x6cu8),
-        //                                   MoveValue::U8(0x61u8),
-        //                                   MoveValue::U8(0x62u8),
-        //                                   MoveValue::U8(0x73u8)
-        // ])];
-        // 
-        //
-        // let result = session.execute_function_bypass_visibility(
-        //     &self.module.self_id(),
-        //     IdentStr::new("fuzzinglabs").unwrap(),
-        //     ty_args,
-        //     combine_signers_and_args(vec![], serialize_values(&args)),
-        //     &mut UnmeteredGasMeter,
-        //     &mut coverage
-        //     );
-
         let ty_args = vec![]
             .into_iter()
             .map(|tag| session.load_type(&tag))
@@ -163,16 +134,16 @@ impl Runner for SuiRunner {
             &self.module.self_id(),
             IdentStr::new("fuzzinglabs").unwrap(),
             ty_args,
-            combine_signers_and_args(vec![], serialize_values(vec![&Self::generate_input(input)])),
+            combine_signers_and_args(vec![], serialize_values(vec![&Self::generate_input(input.clone())])),
             &mut UnmeteredGasMeter,
             &mut coverage
             );
 
         match result {
-            Ok(_values) => Ok(Some(Self::create_coverage(vec![], coverage))),
+            Ok(_values) => Ok(Some(Self::create_coverage(input.clone(), coverage))),
             Err(err) => {
                 let message = format!("{:?}", err);
-                Err((Self::create_coverage(vec![], coverage), message.to_string()))
+                Err((Self::create_coverage(input.clone(), coverage), message.to_string()))
             }
         }
     }

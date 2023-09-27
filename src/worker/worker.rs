@@ -3,8 +3,7 @@ use std::sync::{Arc, RwLock};
 use std::collections::HashSet;
 use std::time::Instant;
 
-use crate::fuzzer::stats::Stats;
-use crate::runner::runner::Runner;
+use crate::fuzzer::stats::Stats; use crate::runner::runner::Runner;
 use crate::mutator::mutator::Mutator;
 use crate::mutator::rng::Rng;
 use crate::fuzzer::coverage::Coverage;
@@ -41,7 +40,7 @@ impl Worker {
 
     fn pick_and_mutate_input(&mut self) -> Vec<u8> {
         let cov = self.coverage_set.iter().nth(self.rng.rand(0, self.coverage_set.len() - 1)).unwrap();
-        self.mutator.mutate(&cov.input, 8)
+        self.mutator.mutate(&cov.input, 4)
     }
 
     pub fn run(&mut self) {
@@ -70,7 +69,7 @@ impl Worker {
             match exec_result {
                 Ok(cov) => {
                     if let Some(coverage) = cov {
-                        if !coverage.data.is_empty() && !self.coverage_set.contains(&coverage) {
+                        if !coverage.data.is_empty() && !coverage.input.is_empty() && !self.coverage_set.contains(&coverage) {
                             self.stats.write().unwrap().secs_since_last_cov = 0;
                             self.coverage_set.insert(coverage);
                             self.channel.send(WorkerEvent::NewCoverage(input.clone())).unwrap();
@@ -78,11 +77,12 @@ impl Worker {
                     }
                 },
                 Err((coverage, _msg)) => {
-                    if !coverage.data.is_empty() && !self.coverage_set.contains(&coverage) {
+                    if !coverage.data.is_empty() && !coverage.input.is_empty() && !self.coverage_set.contains(&coverage) {
+                        eprintln!("NEW COV {:?}\nERR {:?}", coverage, _msg);
+                        self.stats.write().unwrap().secs_since_last_cov = 0;
                         self.coverage_set.insert(coverage);
                         self.channel.send(WorkerEvent::NewCoverage(input.clone())).unwrap();
                     }
-                    // eprintln!("ERROR {}", msg);
                     self.stats.write().unwrap().crashes += 1;
                 }
             }
