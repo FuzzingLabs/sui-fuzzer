@@ -11,6 +11,7 @@ clap = { version = "4.4.4", features = ["derive"] }
 ratatui = { version = "0.23.0", features = ["all-widgets"] }
 serde = { version = "1.0.188", features = ["derive", "serde_derive"] }
 serde_json = "1.0.107"
+basic_mutator = { git = "https://github.com/gamozolabs/basic_mutator" }
 
 # Sui dependencies
 sui-move-build = { path = "./sui/crates/sui-move-build"}
@@ -21,3 +22,4 @@ move-core-types = { path = "./sui/external-crates/move/move-core/types" }
 shared-crypto = { path = "./sui/crates/shared-crypto"}
 sui-keys = { path = "./sui/crates/sui-keys"}
 crossterm = "0.27.0"
+time = "0.3.29"

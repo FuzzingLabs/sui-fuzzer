@@ -1,16 +1,17 @@
 /// A basic random number generator based on xorshift64 with 64-bits of state
-struct Rng {
+pub struct Rng {
     /// The RNG's seed and state
-    seed: u64,
+    pub seed: u64,
 
     /// If set, `rand_exp` behaves the same as `rand`
-    exp_disabled: bool,
+    pub exp_disabled: bool,
 }
 
+#[allow(dead_code)]
 impl Rng {
     /// Generate a random number
     #[inline]
-    fn next(&mut self) -> u64 {
+    pub fn next(&mut self) -> u64 {
         let val = self.seed;
         self.seed ^= self.seed << 13;
         self.seed ^= self.seed >> 17;
@@ -21,7 +22,7 @@ impl Rng {
     /// Generates a random number with uniform distribution in the range of
     /// [min, max]
     #[inline]
-    fn rand(&mut self, min: usize, max: usize) -> usize {
+    pub fn rand(&mut self, min: usize, max: usize) -> usize {
         // Make sure the range is sane
         assert!(max >= min, "Bad range specified for rand()");
 

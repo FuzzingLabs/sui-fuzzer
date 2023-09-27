@@ -3,12 +3,16 @@ use std::sync::RwLock;
 use std::sync::Arc;
 use std::time::Instant;
 use std::collections::VecDeque;
+use time::Duration;
 
 use crate::fuzzer::stats::Stats;
 use crate::fuzzer::config::Config;
 use crate::worker::worker::{Worker, WorkerEvent};
-use crate::runner::sui_runner::SuiRunner;
 use crate::ui::ui::Ui;
+
+// Sui specific imports
+use crate::runner::sui_runner::SuiRunner;
+use crate::mutator::sui_mutator::SuiMutator;
 
 pub struct Fuzzer {
     // Fuzzer configuration
@@ -38,7 +42,7 @@ impl Fuzzer {
     }
 
     fn start_threads(&mut self) {
-        for i in 0..self.config.nb_threads {
+        for _i in 0..self.config.nb_threads {
             // Creates the communication channel for the fuzzer and worker sides
             let (fuzzer, worker) = bichannel::channel::<u8, WorkerEvent>();
             self.channels.push(fuzzer);
@@ -47,23 +51,17 @@ impl Fuzzer {
             // Change here the runner you want to create
             if let Some(parameter) = &self.config.runner_parameter {
                 let runner = Box::new(SuiRunner::new(&parameter.clone()));
+                let seed = self.config.seed.unwrap();
+                let mutator = Box::new(SuiMutator::new(seed, 20));
                 std::thread::spawn(move || {
                     // Creates generic worker and starts it
-                    let mut w = Worker::new(worker, stats, runner);
+                    let mut w = Worker::new(worker, stats, runner, mutator, seed);
                     w.run();
                 });
             }
         }
     }
     
-    fn handle_new_coverage() {
-        unimplemented!()
-    }
-
-    fn handle_new_crash() {
-        unimplemented!()
-    }
-
     fn get_global_execs(&self) -> u64 {
         let mut sum: u64 = 0;
         for i in 0..self.config.nb_threads {
@@ -86,9 +84,8 @@ impl Fuzzer {
 
         // Utils for execs per sec
         let mut execs_per_sec_timer = Instant::now();
-        let mut sec_elapsed = 0;
 
-        let mut events = VecDeque::with_capacity(15);
+        let mut events = VecDeque::new();
 
         loop {
 
@@ -100,16 +97,24 @@ impl Fuzzer {
             if execs_per_sec_timer.elapsed().as_secs() >= 1 {
                 execs_per_sec_timer = Instant::now();
                 self.global_stats.execs_per_sec = self.global_stats.execs;
-                sec_elapsed += 1;
-                self.global_stats.execs_per_sec = self.global_stats.execs_per_sec / sec_elapsed;
+                self.global_stats.time_running += 1;
+                self.global_stats.secs_since_last_cov += 1;
+                self.global_stats.execs_per_sec = self.global_stats.execs_per_sec / self.global_stats.time_running;
             }
 
             // Check channels for new data
             for chan in &self.channels {
                 if let Ok(event) = chan.try_recv() {
                     match event {
-                        WorkerEvent::NewCoverage => {
-                            events.push_back(String::from("New coverage"));
+                        WorkerEvent::NewCoverage(input) => {
+                            let duration = Duration::seconds(self.global_stats.time_running.try_into().unwrap());
+                            self.global_stats.secs_since_last_cov = 0;
+                            events.push_front(String::from(format!("{}d {}h {}m {}s -> New coverage with: {}",
+                                                                   duration.whole_days(),
+                                                                   duration.whole_hours(),
+                                                                   duration.whole_minutes(),
+                                                                   duration.whole_seconds(),
+                                                                   String::from_utf8_lossy(&input))));
                         },
                     }
                 }

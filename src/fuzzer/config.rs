@@ -23,12 +23,13 @@ impl Config {
     pub fn default() -> Self {
         Config {
             use_ui: true,
-            nb_threads: 4,
-            seed: Some(4242),
+            nb_threads: 8,
+            seed: Some(4284),
             runner_parameter: None
         }
     }
 
+    #[allow(dead_code)]
     pub fn load_config(path: &str) -> Self {
         let config_string = fs::read_to_string(path).expect("Unable to read config file");
         return serde_json::from_str(&config_string).expect("Could not parse json config file");

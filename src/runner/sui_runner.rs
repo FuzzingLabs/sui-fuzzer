@@ -17,7 +17,7 @@ use move_binary_format::errors::VMError;
 use move_core_types::resolver::LinkageResolver;
 use std::collections::HashMap;
 
-use crate::fuzzer::coverage::Coverage;
+use crate::fuzzer::coverage::{Coverage, CoverageData};
 use crate::runner::runner::Runner;
 
 #[derive(Clone)]
@@ -77,7 +77,7 @@ fn combine_signers_and_args(
 
 pub struct SuiRunner {
     move_vm: MoveVM,
-    module: CompiledModule
+    module: CompiledModule,
 }
 
 impl SuiRunner {
@@ -88,7 +88,7 @@ impl SuiRunner {
         let module = compiled_package.get_modules().last().unwrap().clone();
         SuiRunner {
             move_vm,
-            module
+            module,
         }
     }
 
@@ -97,54 +97,83 @@ impl SuiRunner {
         config.build(PathBuf::from(package_path)).unwrap()
     }
 
-    fn create_coverage(cov: Vec<u16>) -> Vec<Coverage> {
-        let mut coverage = vec![];
+    fn create_coverage(input: Vec<u8>, cov: Vec<u16>) -> Coverage {
+        let mut coverage_data = vec![];
         for c in cov {
-            coverage.push(Coverage { pc: c as u64 });
+            coverage_data.push(CoverageData { pc: c as u64 });
         }
-        coverage
+        Coverage { input, data: coverage_data }
+    }
+
+    fn generate_input(input: Vec<u8>) -> MoveValue {
+        let mut res = vec![];
+        for i in input {
+            res.push(MoveValue::U8(i));
+        }
+        MoveValue::Vector(res)
     }
 
 }
 
 impl Runner for SuiRunner {
+    type InputType = Vec<u8>;
 
-    fn execute(&mut self) -> Result<Option<Vec<Coverage>>, (Vec<Coverage>, String)> {
+    fn execute(&mut self, input: Self::InputType) -> Result<Option<Coverage>, (Coverage, String)> {
         let mut remote_view = RemoteStore::new();
-        remote_view.add_module(self.module.clone()); let mut session = self.move_vm.new_session(&remote_view);
+        remote_view.add_module(self.module.clone());
+        let mut session = self.move_vm.new_session(&remote_view);
+
+        let mut coverage = vec![];
+
+        // let ty_args = vec![]
+        //     .into_iter()
+        //     .map(|tag| session.load_type(&tag))
+        //     .collect::<VMResult<_>>().unwrap();
+        //
+        // let args = vec![MoveValue::Vector(vec![
+        //                                   MoveValue::U8(0x66u8),
+        //                                   MoveValue::U8(0x75u8),
+        //                                   MoveValue::U8(0x7au8),
+        //                                   MoveValue::U8(0x7au8),
+        //                                   MoveValue::U8(0x69u8),
+        //                                   MoveValue::U8(0x6eu8),
+        //                                   MoveValue::U8(0x67u8),
+        //                                   MoveValue::U8(0x6cu8),
+        //                                   MoveValue::U8(0x61u8),
+        //                                   MoveValue::U8(0x62u8),
+        //                                   MoveValue::U8(0x73u8)
+        // ])];
+        // 
+        //
+        // let result = session.execute_function_bypass_visibility(
+        //     &self.module.self_id(),
+        //     IdentStr::new("fuzzinglabs").unwrap(),
+        //     ty_args,
+        //     combine_signers_and_args(vec![], serialize_values(&args)),
+        //     &mut UnmeteredGasMeter,
+        //     &mut coverage
+        //     );
 
         let ty_args = vec![]
             .into_iter()
             .map(|tag| session.load_type(&tag))
             .collect::<VMResult<_>>().unwrap();
 
-        let args = vec![MoveValue::Vector(vec![
-                                          MoveValue::U8(0x66u8),
-                                          MoveValue::U8(0x75u8),
-                                          MoveValue::U8(0x7au8),
-                                          MoveValue::U8(0x7au8),
-                                          MoveValue::U8(0x69u8),
-                                          MoveValue::U8(0x6eu8),
-                                          MoveValue::U8(0x67u8),
-                                          MoveValue::U8(0x6cu8),
-                                          MoveValue::U8(0x61u8),
-                                          MoveValue::U8(0x62u8),
-                                          MoveValue::U8(0x73u8)
-        ])];
-        
-        let mut coverage = vec![];
-
         let result = session.execute_function_bypass_visibility(
             &self.module.self_id(),
             IdentStr::new("fuzzinglabs").unwrap(),
             ty_args,
-            combine_signers_and_args(vec![], serialize_values(&args)),
+            combine_signers_and_args(vec![], serialize_values(vec![&Self::generate_input(input)])),
             &mut UnmeteredGasMeter,
             &mut coverage
             );
+
         match result {
-            Ok(_values) => Ok(Some(Self::create_coverage(coverage))),
-            Err(err) => Err((Self::create_coverage(coverage), err.message().unwrap().to_string()))
+            Ok(_values) => Ok(Some(Self::create_coverage(vec![], coverage))),
+            Err(err) => {
+                let message = format!("{:?}", err);
+                Err((Self::create_coverage(vec![], coverage), message.to_string()))
+            }
         }
     }
 }
