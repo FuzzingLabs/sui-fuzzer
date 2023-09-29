@@ -14,19 +14,25 @@ use crossterm::{
 
 use crate::fuzzer::stats::Stats;
 
+pub struct UiEventData {
+    pub time: time::Duration,
+    pub message: String
+}
+
+pub enum UiEvent {
+    NewCoverage(UiEventData),
+    NewCrash(UiEventData),
+}
+
 // Data to be displayed on the tui
 pub struct Ui {
-
     terminal: Terminal<CrosstermBackend<Stdout>>,
-
     // Infos (for new coverage, crashes...)
     nb_threads: u8,
-
     // Idx of displayed thread static
     threads_stats_idx: usize,
-
+    // Execs speeds history for graph
     execs_speeds: Vec<(f64, f64)>
-
 }
 
 impl Ui {
@@ -55,7 +61,7 @@ impl Ui {
         self.terminal.show_cursor().unwrap();
     }
 
-    pub fn render(&mut self, stats: &Stats, events: &VecDeque<String>, threads_stats: &Vec<Arc<RwLock<Stats>>>) -> bool {
+    pub fn render(&mut self, stats: &Stats, events: &VecDeque<UiEvent>, threads_stats: &Vec<Arc<RwLock<Stats>>>) -> bool {
         self.terminal.draw(|frame| {
             let chunks = Layout::default()
                 .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
@@ -186,7 +192,7 @@ impl Ui {
         frame: &mut Frame<B>,
         area: Rect,
         _stats: &Stats,
-        events: &VecDeque<String>
+        events: &VecDeque<UiEvent>
         )
         where B: Backend {
             let chunks = Layout::default()
@@ -197,7 +203,43 @@ impl Ui {
 
             let events: Vec<ListItem> = events
                 .iter()
-                .map(|msg| ListItem::new(Span::raw(msg)))
+                .map(|event| {
+                    match event {
+                        UiEvent::NewCoverage(data) => {
+                            let style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
+                            ListItem::new(vec![Line::from(vec![
+                                                          Span::from(format!("{}d {}h {}m {}s",
+                                                                            data.time.whole_days(),
+                                                                            data.time.whole_hours(),
+                                                                            data.time.whole_minutes(),
+                                                                            data.time.whole_seconds(),
+                                                                            )),
+                                                          ": ".into(),
+                                                          Span::styled("COVERAGE", style),
+                                                          " with input: ".into(),
+                                                          data.message.clone().into()
+                            ]),
+                            ])
+                        },
+                        UiEvent::NewCrash(data) => {
+                            let style = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
+                            ListItem::new(vec![Line::from(vec![
+                                                          Span::from(format!("{}d {}h {}m {}s",
+                                                                            data.time.whole_days(),
+                                                                            data.time.whole_hours(),
+                                                                            data.time.whole_minutes(),
+                                                                            data.time.whole_seconds(),
+                                                                            )),
+                                                          ": ".into(),
+                                                          Span::styled("CRASH", style),
+                                                          " with input: ".into(),
+                                                          data.message.clone().into()
+                            ]),
+                            ])
+                        },
+                    }
+                }
+            )
                 .collect();
             let events = List::new(events).start_corner(Corner::BottomLeft);
             frame.render_widget(events, chunks[0]);

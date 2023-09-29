@@ -8,7 +8,7 @@ use time::Duration;
 use crate::fuzzer::stats::Stats;
 use crate::fuzzer::config::Config;
 use crate::worker::worker::{Worker, WorkerEvent};
-use crate::ui::ui::Ui;
+use crate::ui::ui::{Ui, UiEvent, UiEventData};
 
 // Sui specific imports
 use crate::runner::sui_runner::SuiRunner;
@@ -23,7 +23,6 @@ pub struct Fuzzer {
     channels: Vec<Channel<u8, WorkerEvent>>,
     // Global stats mostly for ui
     global_stats: Stats,
-
     // The user interface
     ui: Option<Ui>
 }
@@ -105,16 +104,27 @@ impl Fuzzer {
             // Check channels for new data
             for chan in &self.channels {
                 if let Ok(event) = chan.try_recv() {
+                    let duration = Duration::seconds(self.global_stats.time_running.try_into().unwrap());
                     match event {
                         WorkerEvent::NewCoverage(input) => {
-                            let duration = Duration::seconds(self.global_stats.time_running.try_into().unwrap());
                             self.global_stats.secs_since_last_cov = 0;
-                            events.push_front(String::from(format!("{}d {}h {}m {}s -> New coverage with: {}",
-                                                                   duration.whole_days(),
-                                                                   duration.whole_hours(),
-                                                                   duration.whole_minutes(),
-                                                                   duration.whole_seconds(),
-                                                                   String::from_utf8_lossy(&input))));
+                            events.push_front(
+                                UiEvent::NewCoverage(
+                                    UiEventData { 
+                                        time: duration,
+                                        message: String::from_utf8_lossy(&input).to_string()
+                                    }
+                                    ));
+                        },
+                        WorkerEvent::NewCrash(input) => {
+                            self.global_stats.secs_since_last_cov = 0;
+                            events.push_front(
+                                UiEvent::NewCrash(
+                                    UiEventData { 
+                                        time: duration,
+                                        message: String::from_utf8_lossy(&input).to_string()
+                                    }
+                                    ));
                         },
                     }
                 }

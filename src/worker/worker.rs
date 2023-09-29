@@ -10,6 +10,7 @@ use crate::fuzzer::coverage::Coverage;
 
 pub enum WorkerEvent {
     NewCoverage(Vec<u8>),
+    NewCrash(Vec<u8>),
 }
 
 pub struct Worker {
@@ -78,10 +79,9 @@ impl Worker {
                 },
                 Err((coverage, _msg)) => {
                     if !coverage.data.is_empty() && !coverage.input.is_empty() && !self.coverage_set.contains(&coverage) {
-                        eprintln!("NEW COV {:?}\nERR {:?}", coverage, _msg);
                         self.stats.write().unwrap().secs_since_last_cov = 0;
                         self.coverage_set.insert(coverage);
-                        self.channel.send(WorkerEvent::NewCoverage(input.clone())).unwrap();
+                        self.channel.send(WorkerEvent::NewCrash(input.clone())).unwrap();
                     }
                     self.stats.write().unwrap().crashes += 1;
                 }
