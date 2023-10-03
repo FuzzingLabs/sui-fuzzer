@@ -93,6 +93,7 @@ impl Ui {
 
         if event::poll(Duration::from_millis(250)).unwrap() {
             if let Event::Key(key) = event::read().unwrap() {
+                // q to quit the fuzzer
                 if KeyCode::Char('q') == key.code {
                     return true;
                 }
@@ -174,7 +175,7 @@ impl Ui {
         where B: Backend {
 
             let chunks = Layout::default()
-                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .constraints([Constraint::Percentage(100)].as_ref())
                 .margin(1)
                 .direction(Direction::Horizontal)
                 .split(area);
@@ -202,6 +203,7 @@ impl Ui {
                 .direction(Direction::Horizontal)
                 .split(area);
 
+            // Generates listitems for events
             let events: Vec<ListItem> = events
                 .iter()
                 .map(|event| {
@@ -237,8 +239,10 @@ impl Ui {
                 .direction(Direction::Horizontal)
                 .split(area);
 
+            // Adds new stats to execs_speeds vector
             execs_speeds.push((stats.time_running as f64, stats.execs_per_sec as f64));
 
+            // Finds min and max for dynamic graph
             let min = execs_speeds.iter().fold(execs_speeds[0].1, |min, &x| if x.1 < min { x.1 } else { min });
             let max = execs_speeds.iter().fold(execs_speeds[0].1, |max, &x| if x.1 > max { x.1 } else { max });
 
@@ -251,6 +255,7 @@ impl Ui {
             ];
 
 
+            // Bindings for grap labels
             let binding1 = (max as u64).to_string();
             let binding_max = binding1.bold();
             let binding2 = ((max / 2.0) as u64).to_string();

@@ -116,7 +116,7 @@ impl Fuzzer {
                                     }
                                     ));
                         },
-                        WorkerEvent::NewCrash(input) => {
+                        WorkerEvent::NewCrash(input, _msg) => {
                             events.push_front(
                                 UiEvent::NewCrash(
                                     UiEventData { 
@@ -135,7 +135,9 @@ impl Fuzzer {
                     self.ui.as_mut().unwrap().restore_terminal();
                     break;
                 }
-            } else {}
+            } else {
+                // TODO Implement simple println ui
+            }
 
         }
     }
