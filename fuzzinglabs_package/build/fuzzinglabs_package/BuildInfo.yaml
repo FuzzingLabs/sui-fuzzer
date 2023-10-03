@@ -5,7 +5,7 @@ compiled_package_info:
     fuzzinglabs_package: "0000000000000000000000000000000000000000000000000000000000000000"
     std: "0000000000000000000000000000000000000000000000000000000000000001"
     sui: "0000000000000000000000000000000000000000000000000000000000000002"
-  source_digest: ED793C70005465010D440000119059DD1A5EBB949D71F24E0743527A10278C80
+  source_digest: 8E89B824E76982B2F901803342F1E350A0AE981E910DEA5C958BBC3571B76FAE
   build_flags:
     dev_mode: false
     test_mode: false
@@ -13,7 +13,7 @@ compiled_package_info:
     generate_abis: false
     install_dir: ~
     force_recompilation: false
-    lock_file: ~
+    lock_file: "./Move.lock"
     additional_named_addresses: {}
     fetch_deps_only: false
     skip_fetch_latest_git_deps: false

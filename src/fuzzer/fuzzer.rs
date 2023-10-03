@@ -4,11 +4,13 @@ use std::sync::Arc;
 use std::time::Instant;
 use std::collections::VecDeque;
 use time::Duration;
+use std::collections::HashSet;
 
 use crate::fuzzer::stats::Stats;
 use crate::fuzzer::config::Config;
 use crate::worker::worker::{Worker, WorkerEvent};
 use crate::ui::ui::{Ui, UiEvent, UiEventData};
+use crate::fuzzer::coverage::Coverage;
 
 // Sui specific imports
 use crate::runner::sui_runner::SuiRunner;
@@ -23,6 +25,8 @@ pub struct Fuzzer {
     channels: Vec<Channel<u8, WorkerEvent>>,
     // Global stats mostly for ui
     global_stats: Stats,
+    // Global coverage
+    coverage_set: HashSet<Coverage>,
     // The user interface
     ui: Option<Ui>
 }
@@ -36,6 +40,7 @@ impl Fuzzer {
             threads_stats: vec![],
             channels: vec![],
             global_stats: Stats::new(),
+            coverage_set: HashSet::new(),
             ui: Some(Ui::new(nb_threads))
         }
     }
