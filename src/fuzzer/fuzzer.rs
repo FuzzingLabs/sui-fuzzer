@@ -50,6 +50,7 @@ impl Fuzzer {
             // Change here the runner you want to create
             if let Some(parameter) = &self.config.runner_parameter {
                 let runner = Box::new(SuiRunner::new(&parameter.clone()));
+                // Increment seed so that each worker doesn't do the same thing
                 let seed = self.config.seed.unwrap() + (i as u64);
                 let mutator = Box::new(SuiMutator::new(seed, 11));
                 std::thread::spawn(move || {

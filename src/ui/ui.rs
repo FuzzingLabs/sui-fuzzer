@@ -128,10 +128,16 @@ impl Ui {
                 .split(area);
 
             let duration = time::Duration::seconds(stats.secs_since_last_cov.try_into().unwrap());
+            let running_duration = time::Duration::seconds(stats.time_running.try_into().unwrap());
             let text = vec![
                 text::Line::from(format!("Crashes: {}", stats.crashes)),
                 text::Line::from(format!("Total execs: {}", stats.execs)),
                 text::Line::from(format!("Execs/s: {}", stats.execs_per_sec)),
+                text::Line::from(format!("Running for: {}d {}h {}m {}s",
+                                         running_duration.whole_days(),
+                                         running_duration.whole_hours(),
+                                         running_duration.whole_minutes(),
+                                         running_duration.whole_seconds())),
                 text::Line::from(format!("Last coverage update: {}d {}h {}m {}s",
                                          duration.whole_days(),
                                          duration.whole_hours(),
