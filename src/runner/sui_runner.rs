@@ -1,7 +1,4 @@
 use move_vm_runtime::move_vm::MoveVM;
-use sui_move_build::BuildConfig;
-use std::path::PathBuf;
-use sui_move_build::CompiledPackage;
 use move_vm_types::gas::UnmeteredGasMeter;
 use move_core_types::value::serialize_values;
 use move_core_types::identifier::IdentStr;
@@ -16,6 +13,9 @@ use move_core_types::resolver::ModuleResolver;
 use move_binary_format::errors::VMError;
 use move_core_types::resolver::LinkageResolver;
 use std::collections::HashMap;
+
+use std::io::prelude::*;
+use std::fs::File;
 
 use crate::fuzzer::coverage::{Coverage, CoverageData};
 use crate::runner::runner::Runner;
@@ -82,19 +82,17 @@ pub struct SuiRunner {
 
 impl SuiRunner {
 
-    pub fn new(package_path: &str) -> Self {
+    pub fn new(module_path: &str) -> Self {
         let move_vm = MoveVM::new(vec![]).unwrap();
-        let compiled_package = Self::compile_package(package_path);
-        let module = compiled_package.get_modules().last().unwrap().clone();
+        // Loading compiled module
+        let mut f = File::open(module_path).unwrap();
+        let mut buffer = Vec::new();
+        f.read_to_end(&mut buffer).unwrap();
+        let module = CompiledModule::deserialize_with_defaults(&buffer).unwrap();
         SuiRunner {
             move_vm,
             module,
         }
-    }
-
-    fn compile_package(package_path: &str) -> CompiledPackage {
-        let config = BuildConfig::default();
-        config.build(PathBuf::from(package_path)).unwrap()
     }
 
     fn create_coverage(input: Vec<u8>, cov: Vec<u16>) -> Coverage {
