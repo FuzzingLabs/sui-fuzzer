@@ -9,5 +9,5 @@ Fuzzer for SuiMove smartcontracts.
 To run the fuzzer just use:
 
 ```bash
-$ make
+$ make PACKAGE_PATH="./fuzzinglabs_package"
 ```

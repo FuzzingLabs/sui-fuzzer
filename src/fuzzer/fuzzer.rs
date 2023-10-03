@@ -105,9 +105,9 @@ impl Fuzzer {
             for chan in &self.channels {
                 if let Ok(event) = chan.try_recv() {
                     let duration = Duration::seconds(self.global_stats.time_running.try_into().unwrap());
+                    self.global_stats.secs_since_last_cov = 0;
                     match event {
                         WorkerEvent::NewCoverage(input) => {
-                            self.global_stats.secs_since_last_cov = 0;
                             events.push_front(
                                 UiEvent::NewCoverage(
                                     UiEventData { 
@@ -117,7 +117,6 @@ impl Fuzzer {
                                     ));
                         },
                         WorkerEvent::NewCrash(input) => {
-                            self.global_stats.secs_since_last_cov = 0;
                             events.push_front(
                                 UiEvent::NewCrash(
                                     UiEventData { 

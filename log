@@ -100,8 +100,8 @@ note: but the private item here shadows it
    = note: `#[warn(hidden_glob_reexports)]` on by default
 
 warning: `move-cli` (lib) generated 1 warning
-    Finished dev [unoptimized + debuginfo] target(s) in 0.45s
-     Running `target/debug/fuzzer`
+    Finished dev [unoptimized + debuginfo] target(s) in 0.49s
+     Running `target/debug/fuzzer --package-path ./fuzzinglabs_package`
 Warning: unknown field name found. Expected one of [name, version, authors, license, edition, flavor], but found 'published-at'
 Warning: unknown field name found. Expected one of [name, version, authors, license, edition, flavor], but found 'published-at'
 Warning: unknown field name found. Expected one of [name, version, authors, license, edition, flavor], but found 'published-at'

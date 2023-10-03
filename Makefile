@@ -1,3 +1,3 @@
 all:
 	cargo build
-	cargo run 2> log
+	cargo run -- --package-path $(PACKAGE_PATH) 2> log

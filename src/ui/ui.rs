@@ -13,6 +13,7 @@ use crossterm::{
 };
 
 use crate::fuzzer::stats::Stats;
+use crate::ui::utils::create_event_item;
 
 pub struct UiEventData {
     pub time: time::Duration,
@@ -207,35 +208,13 @@ impl Ui {
                     match event {
                         UiEvent::NewCoverage(data) => {
                             let style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
-                            ListItem::new(vec![Line::from(vec![
-                                                          Span::from(format!("{}d {}h {}m {}s",
-                                                                            data.time.whole_days(),
-                                                                            data.time.whole_hours(),
-                                                                            data.time.whole_minutes(),
-                                                                            data.time.whole_seconds(),
-                                                                            )),
-                                                          ": ".into(),
-                                                          Span::styled("COVERAGE", style),
-                                                          " with input: ".into(),
-                                                          data.message.clone().into()
-                            ]),
-                            ])
+                            let event_type = "COVERAGE".to_string();
+                            create_event_item(data.time, style, event_type, data.message.clone())
                         },
                         UiEvent::NewCrash(data) => {
                             let style = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
-                            ListItem::new(vec![Line::from(vec![
-                                                          Span::from(format!("{}d {}h {}m {}s",
-                                                                            data.time.whole_days(),
-                                                                            data.time.whole_hours(),
-                                                                            data.time.whole_minutes(),
-                                                                            data.time.whole_seconds(),
-                                                                            )),
-                                                          ": ".into(),
-                                                          Span::styled("CRASH", style),
-                                                          " with input: ".into(),
-                                                          data.message.clone().into()
-                            ]),
-                            ])
+                            let event_type = "CRASH".to_string();
+                            create_event_item(data.time, style, event_type, data.message.clone())
                         },
                     }
                 }
@@ -265,7 +244,7 @@ impl Ui {
 
             let datasets = vec![
                 Dataset::default()
-                    .name("Execs speeds")
+                    // .name("Execs speeds")
                     .marker(symbols::Marker::Braille)
                     .style(Style::default().fg(Color::Yellow))
                     .data(&execs_speeds),
