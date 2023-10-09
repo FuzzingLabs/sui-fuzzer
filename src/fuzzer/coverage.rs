@@ -1,12 +1,12 @@
 use std::hash::{Hash, Hasher};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Coverage {
     pub input: Vec<u8>,
     pub data: Vec<CoverageData>
 }
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone)]
 pub struct CoverageData {
     pub pc: u64
 }
