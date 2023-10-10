@@ -14,16 +14,13 @@ mod mutator;
 struct Args {
     /// Path of the package to fuzz
     #[arg(short, long)]
-    module_path: String,
+    config_path: String,
 }
 
 fn main() {
     let args = Args::parse();
-    if args.module_path != "" {
-        let config = Config {
-            runner_parameter: Some(args.module_path),
-            ..Config::default()
-        };
+    if args.config_path != "" {
+        let config = Config::load_config(&args.config_path);
         let mut fuzzer = Fuzzer::new(config);
         fuzzer.run();
     }

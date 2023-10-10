@@ -1,0 +1,7 @@
+{
+  "use_ui": true,
+  "nb_threads": 8,
+  "seed": 4242,
+  "runner_parameter": "./fuzzinglabs_package/build/fuzzinglabs_package/bytecode_modules/fuzzinglabs_module.mv",
+  "execs_before_cov_update": 10000
+}

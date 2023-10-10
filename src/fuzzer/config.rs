@@ -3,29 +3,28 @@ use std::fs;
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
-
     // Whether to use the ui or not
     pub use_ui: bool,
-
     // Number of threads (worker) started
     pub nb_threads: u8,
-
     // Rng seed
     pub seed: Option<u64>,
-
     // Initialization parameter of the runner (can be anything since it a string (json, base64, ...))
-    pub runner_parameter: Option<String>
-
+    pub runner_parameter: Option<String>,
+    // How many execs before coverage update
+    pub execs_before_cov_update: u64,
 }
 
 impl Config {
 
+    #[allow(dead_code)]
     pub fn default() -> Self {
         Config {
             use_ui: true,
             nb_threads: 8,
             seed: Some(4284),
-            runner_parameter: None
+            runner_parameter: None,
+            execs_before_cov_update: 10_000
         }
     }
 

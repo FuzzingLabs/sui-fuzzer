@@ -54,13 +54,15 @@ impl Fuzzer {
             self.threads_stats.push(stats.clone());
             // Change here the runner you want to create
             if let Some(parameter) = &self.config.runner_parameter {
+                // Creates the sui runner with the runner parameter found in the config
                 let runner = Box::new(SuiRunner::new(&parameter.clone()));
                 // Increment seed so that each worker doesn't do the same thing
                 let seed = self.config.seed.unwrap() + (i as u64);
+                let execs_before_cov_update = self.config.execs_before_cov_update;
                 let mutator = Box::new(SuiMutator::new(seed, 12));
                 let _ = std::thread::Builder::new().name(format!("Worker {}", i).to_string()).spawn(move || {
                     // Creates generic worker and starts it
-                    let mut w = Worker::new(worker, stats, runner, mutator, seed);
+                    let mut w = Worker::new(worker, stats, runner, mutator, seed, execs_before_cov_update);
                     w.run();
                 });
             }
@@ -130,6 +132,7 @@ impl Fuzzer {
                                 if !self.coverage_set.contains(diff) {
                                     self.coverage_set.insert(diff.to_owned().clone());
                                     self.global_stats.secs_since_last_cov = 0;
+                                    self.global_stats.coverage_size += 1;
                                     events.push_front
                                         (
                                             UiEvent::NewCoverage

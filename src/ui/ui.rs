@@ -28,12 +28,12 @@ pub enum UiEvent {
 // Data to be displayed on the tui
 pub struct Ui {
     terminal: Terminal<CrosstermBackend<Stdout>>,
-    // Infos (for new coverage, crashes...)
+    // Infos (for new coverage, coverages...)
     nb_threads: u8,
     // Idx of displayed thread static
     threads_stats_idx: usize,
-    // Execs speeds history for graph
-    execs_speeds: Vec<(f64, f64)>
+    // Coverage history for graph
+    coverages: Vec<(f64, f64)>
 }
 
 impl Ui {
@@ -45,7 +45,7 @@ impl Ui {
             terminal,
             nb_threads,
             threads_stats_idx: 0,
-            execs_speeds: vec![]
+            coverages: vec![]
         }
     }
 
@@ -76,7 +76,7 @@ impl Ui {
 
             // Stats block
             let stats_block = Block::default().borders(Borders::ALL).title("Stats");
-            Self::draw_stats_block(frame, chunks[0], stats, self.threads_stats_idx, threads_stats, &mut self.execs_speeds);
+            Self::draw_stats_block(frame, chunks[0], stats, self.threads_stats_idx, threads_stats, &mut self.coverages);
             frame.render_widget(stats_block, chunks[0]);
 
             // Events block
@@ -117,7 +117,7 @@ impl Ui {
         stats: &Stats,
         threads_stats_idx: usize,
         threads_stats: &Vec<Arc<RwLock<Stats>>>,
-        execs_speeds: &mut Vec<(f64, f64)>
+        coverages: &mut Vec<(f64, f64)>
         )
         where B: Backend {
 
@@ -164,12 +164,12 @@ impl Ui {
             frame.render_widget(worker_stats_block, chunks[1]);
 
             let graph_block = Block::default().borders(Borders::ALL).title(Span::styled(
-                    "Execs speeds",
+                    "Graphs",
                     Style::default()
                     .fg(Color::Red)
                     .add_modifier(Modifier::BOLD),
                     ));
-            Self::draw_graph_block(frame, chunks[2], stats, execs_speeds);
+            Self::draw_graph_block(frame, chunks[2], stats, coverages);
             frame.render_widget(graph_block, chunks[2]);
         }
 
@@ -236,9 +236,13 @@ impl Ui {
         frame: &mut Frame<B>,
         area: Rect,
         stats: &Stats,
-        execs_speeds: &mut Vec<(f64, f64)>
+        coverages: &mut Vec<(f64, f64)>
         )
         where B: Backend {
+            // Avoid dividing by zero
+            if stats.time_running == 0 {
+                return;
+            }
             let chunks = Layout::default()
                 .constraints([Constraint::Percentage(100)].as_ref())
                 .margin(1)
@@ -246,18 +250,18 @@ impl Ui {
                 .split(area);
 
             // Adds new stats to execs_speeds vector
-            execs_speeds.push((stats.time_running as f64, stats.execs_per_sec as f64));
+            coverages.push((stats.time_running as f64, (stats.coverage_size / stats.time_running) as f64));
 
             // Finds min and max for dynamic graph
-            let min = execs_speeds.iter().fold(execs_speeds[0].1, |min, &x| if x.1 < min { x.1 } else { min });
-            let max = execs_speeds.iter().fold(execs_speeds[0].1, |max, &x| if x.1 > max { x.1 } else { max });
+            let min = coverages.iter().fold(coverages[0].1, |min, &x| if x.1 < min { x.1 } else { min });
+            let max = coverages.iter().fold(coverages[0].1, |max, &x| if x.1 > max { x.1 } else { max });
 
             let datasets = vec![
                 Dataset::default()
                     // .name("Execs speeds")
                     .marker(symbols::Marker::Braille)
                     .style(Style::default().fg(Color::Yellow))
-                    .data(&execs_speeds),
+                    .data(&coverages),
             ];
 
 
@@ -278,7 +282,7 @@ impl Ui {
                     )
                 .y_axis(
                     Axis::default()
-                    .title("Execs/s")
+                    .title("Coverages/s")
                     .style(Style::default().fg(Color::Gray))
                     .labels(vec![binding_min, binding_mid, binding_max])
                     .bounds([min, max]),

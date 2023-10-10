@@ -20,7 +20,8 @@ pub struct Worker {
     runner: Box<dyn Runner<InputType = Vec<u8>>>,
     mutator: Box<dyn Mutator>,
     coverage_set: HashSet<Coverage>,
-    rng: Rng
+    rng: Rng,
+    execs_before_cov_update: u64
 }
 
 impl Worker {
@@ -31,7 +32,8 @@ impl Worker {
             stats: Arc<RwLock<Stats>>,
             runner: Box<dyn Runner<InputType = Vec<u8>>>,
             mutator: Box<dyn Mutator>,
-            seed: u64
+            seed: u64,
+            execs_before_cov_update: u64
         ) -> Self {
             Worker {
                 channel,
@@ -39,7 +41,8 @@ impl Worker {
                 runner,
                 mutator,
                 coverage_set: HashSet::new(),
-                rng: Rng { seed, exp_disabled: false }
+                rng: Rng { seed, exp_disabled: false },
+                execs_before_cov_update
             }
         }
 
@@ -92,8 +95,9 @@ impl Worker {
                 }
             }
 
-            // Handle coverage updates every 10k execs
-            if self.stats.read().unwrap().execs % 10_000 == 0 {
+            // Handle coverage updates every execs_before_cov_update execs (configurable in
+            // configfile)
+            if self.stats.read().unwrap().execs % self.execs_before_cov_update == 0 {
                 self.channel.send(WorkerEvent::CoverageUpdateRequest(self.coverage_set.clone())).unwrap();
             }
 
