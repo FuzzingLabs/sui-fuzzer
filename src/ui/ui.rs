@@ -33,7 +33,9 @@ pub struct Ui {
     // Idx of displayed thread static
     threads_stats_idx: usize,
     // Coverage history for graph
-    coverages: Vec<(f64, f64)>
+    coverages: Vec<(f64, f64)>,
+    // Crashes history for graph
+    crashes: Vec<(f64, f64)>
 }
 
 impl Ui {
@@ -45,7 +47,8 @@ impl Ui {
             terminal,
             nb_threads,
             threads_stats_idx: 0,
-            coverages: vec![]
+            coverages: vec![],
+            crashes: vec![]
         }
     }
 
@@ -76,7 +79,7 @@ impl Ui {
 
             // Stats block
             let stats_block = Block::default().borders(Borders::ALL).title("Stats");
-            Self::draw_stats_block(frame, chunks[0], stats, self.threads_stats_idx, threads_stats, &mut self.coverages);
+            Self::draw_stats_block(frame, chunks[0], stats, self.threads_stats_idx, threads_stats, &mut self.coverages, &mut self.crashes);
             frame.render_widget(stats_block, chunks[0]);
 
             // Events block
@@ -117,7 +120,8 @@ impl Ui {
         stats: &Stats,
         threads_stats_idx: usize,
         threads_stats: &Vec<Arc<RwLock<Stats>>>,
-        coverages: &mut Vec<(f64, f64)>
+        coverages: &mut Vec<(f64, f64)>,
+        crashes: &mut Vec<(f64, f64)>
         )
         where B: Backend {
 
@@ -169,7 +173,7 @@ impl Ui {
                     .fg(Color::Red)
                     .add_modifier(Modifier::BOLD),
                     ));
-            Self::draw_graph_block(frame, chunks[2], stats, coverages);
+            Self::draw_graph_block(frame, chunks[2], stats, coverages, crashes);
             frame.render_widget(graph_block, chunks[2]);
         }
 
@@ -236,7 +240,8 @@ impl Ui {
         frame: &mut Frame<B>,
         area: Rect,
         stats: &Stats,
-        coverages: &mut Vec<(f64, f64)>
+        coverages: &mut Vec<(f64, f64)>,
+        crashes: &mut Vec<(f64, f64)>
         )
         where B: Backend {
             // Avoid dividing by zero
@@ -251,6 +256,7 @@ impl Ui {
 
             // Adds new stats to execs_speeds vector
             coverages.push((stats.time_running as f64, (stats.coverage_size / stats.time_running) as f64));
+            crashes.push((stats.time_running as f64, (stats.crashes / stats.time_running) as f64));
 
             // Finds min and max for dynamic graph
             let min = coverages.iter().fold(coverages[0].1, |min, &x| if x.1 < min { x.1 } else { min });
@@ -258,14 +264,21 @@ impl Ui {
 
             let datasets = vec![
                 Dataset::default()
-                    // .name("Execs speeds")
+                    .name("Coverage size")
                     .marker(symbols::Marker::Braille)
+                    .graph_type(GraphType::Line)
                     .style(Style::default().fg(Color::Yellow))
                     .data(&coverages),
+                Dataset::default()
+                    .name("Crash")
+                    .marker(symbols::Marker::Braille)
+                    .graph_type(GraphType::Line)
+                    .style(Style::default().fg(Color::Red))
+                    .data(&crashes),
             ];
 
 
-            // Bindings for grap labels
+            // Bindings for graph labels
             let binding1 = (max as u64).to_string();
             let binding_max = binding1.bold();
             let binding2 = ((max / 2.0) as u64).to_string();
@@ -282,7 +295,7 @@ impl Ui {
                     )
                 .y_axis(
                     Axis::default()
-                    .title("Coverages/s")
+                    .title("Coverages/Crashes per second")
                     .style(Style::default().fg(Color::Gray))
                     .labels(vec![binding_min, binding_mid, binding_max])
                     .bounds([min, max]),

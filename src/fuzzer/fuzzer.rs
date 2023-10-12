@@ -128,6 +128,7 @@ impl Fuzzer {
                             if differences_with_main_thread.len() > 0 {
                                 chan.send(WorkerEvent::CoverageUpdateResponse(tmp)).unwrap();
                             }
+                            // Adds all the coverage to the main coverage_set
                             for diff in &differences_with_worker {
                                 if !self.coverage_set.contains(diff) {
                                     self.coverage_set.insert(diff.to_owned().clone());
@@ -147,14 +148,15 @@ impl Fuzzer {
                             }
                         },
                         WorkerEvent::NewCrash(input, _msg) => {
-                            events.push_front(
-                                UiEvent::NewCrash
+                            events.push_front
                                 (
-                                    UiEventData { 
-                                        time: duration,
-                                        message: String::from_utf8_lossy(&input).to_string()
-                                    }
-                                )
+                                    UiEvent::NewCrash
+                                    (
+                                        UiEventData { 
+                                            time: duration,
+                                            message: String::from_utf8_lossy(&input).to_string()
+                                        }
+                                    )
                                 );
                         },
                         _ => unimplemented!(),
