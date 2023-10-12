@@ -23,3 +23,4 @@ shared-crypto = { path = "./sui/crates/shared-crypto"}
 sui-keys = { path = "./sui/crates/sui-keys"}
 crossterm = "0.27.0"
 time = "0.3.29"
+memory-stats = "1.1.0"

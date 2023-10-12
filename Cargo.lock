@@ -3931,6 +3931,7 @@ dependencies = [
  "bichannel",
  "clap",
  "crossterm 0.27.0",
+ "memory-stats",
  "move-binary-format",
  "move-core-types",
  "move-vm-runtime-v0",
@@ -5266,6 +5267,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a634b1c61a95585bd15607c6ab0c4e5b226e695ff2800ba0cdccddf208c406c"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "memory-stats"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34f79cf9964c5c9545493acda1263f1912f8d2c56c8a2ffee2606cb960acaacc"
+dependencies = [
+ "libc",
+ "winapi",
 ]
 
 [[package]]

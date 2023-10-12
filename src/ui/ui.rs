@@ -6,6 +6,7 @@ use ratatui::{prelude::*, widgets::*};
 use std::io;
 use std::sync::{RwLock, Arc};
 use std::collections::VecDeque;
+use memory_stats::memory_stats;
 use crossterm::{
     event::{self, Event, KeyCode},
     terminal::{EnterAlternateScreen, enable_raw_mode, LeaveAlternateScreen, disable_raw_mode},
@@ -35,7 +36,9 @@ pub struct Ui {
     // Coverage history for graph
     coverages: Vec<(f64, f64)>,
     // Crashes history for graph
-    crashes: Vec<(f64, f64)>
+    crashes: Vec<(f64, f64)>,
+    // Index for graph tabs
+    tab_index: usize
 }
 
 impl Ui {
@@ -48,7 +51,8 @@ impl Ui {
             nb_threads,
             threads_stats_idx: 0,
             coverages: vec![],
-            crashes: vec![]
+            crashes: vec![],
+            tab_index: 0
         }
     }
 
@@ -68,7 +72,7 @@ impl Ui {
     pub fn render(&mut self, stats: &Stats, events: &VecDeque<UiEvent>, threads_stats: &Vec<Arc<RwLock<Stats>>>) -> bool {
         self.terminal.draw(|frame| {
             let chunks = Layout::default()
-                .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                 .margin(1)
                 .direction(Direction::Vertical)
                 .split(frame.size());
@@ -79,7 +83,17 @@ impl Ui {
 
             // Stats block
             let stats_block = Block::default().borders(Borders::ALL).title("Stats");
-            Self::draw_stats_block(frame, chunks[0], stats, self.threads_stats_idx, threads_stats, &mut self.coverages, &mut self.crashes);
+            Self::draw_stats_block
+                (
+                    frame,
+                    chunks[0],
+                    stats,
+                    self.threads_stats_idx,
+                    threads_stats,
+                    &mut self.coverages,
+                    &mut self.crashes,
+                    self.tab_index
+                );
             frame.render_widget(stats_block, chunks[0]);
 
             // Events block
@@ -109,6 +123,13 @@ impl Ui {
                     self.threads_stats_idx = 
                         if (self.threads_stats_idx + 1) < self.nb_threads as usize { (self.threads_stats_idx + 1).into() } else { 0 }  
                 }
+                // Inputs for graphs
+                if KeyCode::Left == key.code {
+                    self.tab_index = if self.tab_index == 0 { 1 } else { 0 }
+                }
+                if KeyCode::Right == key.code {
+                    self.tab_index = if self.tab_index == 1 { 0 } else { 1 }
+                }
             }
         }
         return false;
@@ -121,7 +142,8 @@ impl Ui {
         threads_stats_idx: usize,
         threads_stats: &Vec<Arc<RwLock<Stats>>>,
         coverages: &mut Vec<(f64, f64)>,
-        crashes: &mut Vec<(f64, f64)>
+        crashes: &mut Vec<(f64, f64)>,
+        index: usize
         )
         where B: Backend {
 
@@ -133,6 +155,11 @@ impl Ui {
 
             let duration = time::Duration::seconds(stats.secs_since_last_cov.try_into().unwrap());
             let running_duration = time::Duration::seconds(stats.time_running.try_into().unwrap());
+            // Gets memory usage
+            let mut mem = 0;
+            if let Some(usage) = memory_stats() {
+                mem = usage.virtual_mem;
+            }
             let text = vec![
                 text::Line::from(format!("Crashes: {}", stats.crashes)),
                 text::Line::from(format!("Total execs: {}", stats.execs)),
@@ -142,11 +169,12 @@ impl Ui {
                                          running_duration.whole_hours(),
                                          running_duration.whole_minutes(),
                                          running_duration.whole_seconds())),
-                text::Line::from(format!("Last coverage update: {}d {}h {}m {}s",
-                                         duration.whole_days(),
-                                         duration.whole_hours(),
-                                         duration.whole_minutes(),
-                                         duration.whole_seconds())),
+                                         text::Line::from(format!("Last coverage update: {}d {}h {}m {}s",
+                                                                  duration.whole_days(),
+                                                                  duration.whole_hours(),
+                                                                  duration.whole_minutes(),
+                                                                  duration.whole_seconds())),
+                                                                  text::Line::from(format!("Memory usage: {} MB", mem / 1000000))
             ];
             let global_stats_block = Block::default().borders(Borders::ALL).title(Span::styled(
                     "Globals stats:",
@@ -168,12 +196,12 @@ impl Ui {
             frame.render_widget(worker_stats_block, chunks[1]);
 
             let graph_block = Block::default().borders(Borders::ALL).title(Span::styled(
-                    "Graphs",
+                    "Graphs (arrow key to switch)",
                     Style::default()
                     .fg(Color::Red)
                     .add_modifier(Modifier::BOLD),
                     ));
-            Self::draw_graph_block(frame, chunks[2], stats, coverages, crashes);
+            Self::draw_graph_block(frame, chunks[2], stats, coverages, crashes, index);
             frame.render_widget(graph_block, chunks[2]);
         }
 
@@ -198,7 +226,7 @@ impl Ui {
             let global_stats_block = Block::default();
             let paragraph = Paragraph::new(text).block(global_stats_block).wrap(Wrap { trim: true });
             frame.render_widget(paragraph, chunks[0]);
-    }
+        }
 
     fn draw_events_block<B>(
         frame: &mut Frame<B>,
@@ -230,7 +258,7 @@ impl Ui {
                         },
                     }
                 }
-            )
+                )
                 .collect();
             let events = List::new(events).start_corner(Corner::BottomLeft);
             frame.render_widget(events, chunks[0]);
@@ -241,7 +269,8 @@ impl Ui {
         area: Rect,
         stats: &Stats,
         coverages: &mut Vec<(f64, f64)>,
-        crashes: &mut Vec<(f64, f64)>
+        crashes: &mut Vec<(f64, f64)>,
+        index: usize
         )
         where B: Backend {
             // Avoid dividing by zero
@@ -254,29 +283,52 @@ impl Ui {
                 .direction(Direction::Horizontal)
                 .split(area);
 
+            let chunks = Layout::default()
+                .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
+                .split(chunks[0]);
+            let titles = vec!["Coverage", "Crashes"] 
+                .iter()
+                .map(|t| text::Line::from(Span::styled(*t, Style::default().fg(Color::Green))))
+                .collect();
+            let tabs = Tabs::new(titles)
+                .block(Block::default().borders(Borders::ALL))
+                .highlight_style(Style::default().fg(Color::Blue))
+                .select(index);
+            frame.render_widget(tabs, chunks[0]);
+
             // Adds new stats to execs_speeds vector
-            coverages.push((stats.time_running as f64, (stats.coverage_size / stats.time_running) as f64));
+            coverages.push((stats.time_running as f64, stats.coverage_size as f64));
             crashes.push((stats.time_running as f64, (stats.crashes / stats.time_running) as f64));
 
-            // Finds min and max for dynamic graph
-            let min = coverages.iter().fold(coverages[0].1, |min, &x| if x.1 < min { x.1 } else { min });
-            let max = coverages.iter().fold(coverages[0].1, |max, &x| if x.1 > max { x.1 } else { max });
+            if index == 0 {
+                Self::draw_graph(frame, chunks[1], "Coverage", Color::Yellow, stats, coverages);
+            } else {
+                Self::draw_graph(frame, chunks[1], "Crashes", Color::Red, stats, crashes);
+            }
+        }
+
+    fn draw_graph<B>(
+        frame: &mut Frame<B>,
+        area: Rect,
+        title: &str,
+        color: Color,
+        stats: &Stats,
+        data: &mut Vec<(f64, f64)>,
+        )
+        where B: Backend {
 
             let datasets = vec![
                 Dataset::default()
-                    .name("Coverage size")
+                    .name(title)
                     .marker(symbols::Marker::Braille)
                     .graph_type(GraphType::Line)
-                    .style(Style::default().fg(Color::Yellow))
-                    .data(&coverages),
-                Dataset::default()
-                    .name("Crash")
-                    .marker(symbols::Marker::Braille)
-                    .graph_type(GraphType::Line)
-                    .style(Style::default().fg(Color::Red))
-                    .data(&crashes),
+                    .style(Style::default().fg(color))
+                    .data(&data),
             ];
-
+            
+            // Finds min and max for dynamic graph
+            let min = data.iter().fold(data[0].1, |min, &x| if x.1 < min { x.1 } else { min });
+            let max = data.iter().fold(data[0].1, |max, &x| if x.1 > max { x.1 } else { max });
 
             // Bindings for graph labels
             let binding1 = (max as u64).to_string();
@@ -295,11 +347,10 @@ impl Ui {
                     )
                 .y_axis(
                     Axis::default()
-                    .title("Coverages/Crashes per second")
                     .style(Style::default().fg(Color::Gray))
                     .labels(vec![binding_min, binding_mid, binding_max])
                     .bounds([min, max]),
                     );
-            frame.render_widget(chart, chunks[0]);
+            frame.render_widget(chart, area);
         }
 }
