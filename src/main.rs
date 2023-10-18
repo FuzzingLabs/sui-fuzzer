@@ -1,13 +1,13 @@
 use clap::Parser;
 
-use crate::fuzzer::fuzzer::Fuzzer;
 use crate::fuzzer::config::Config;
+use crate::fuzzer::fuzzer::Fuzzer;
 
 mod fuzzer;
-mod runner;
-mod worker;
-mod ui;
 mod mutator;
+mod runner;
+mod ui;
+mod worker;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

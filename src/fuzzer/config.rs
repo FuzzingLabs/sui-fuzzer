@@ -13,6 +13,10 @@ pub struct Config {
     pub runner_parameter: Option<String>,
     // How many execs before coverage update
     pub execs_before_cov_update: u64,
+    // Where to put the corpus
+    pub corpus_dir: String,
+    // Where to put the crash files
+    pub crashes_dir: String,
 }
 
 impl Config {
@@ -24,7 +28,9 @@ impl Config {
             nb_threads: 8,
             seed: Some(4284),
             runner_parameter: None,
-            execs_before_cov_update: 10_000
+            execs_before_cov_update: 10_000,
+            corpus_dir: "./corpus".to_string(),
+            crashes_dir: "./crashes".to_string(),
         }
     }
 

@@ -1,3 +1,4 @@
+use move_core_types::vm_status::StatusCode;
 use move_vm_runtime::move_vm::MoveVM;
 use move_vm_types::gas::UnmeteredGasMeter;
 use move_core_types::value::serialize_values;
@@ -18,6 +19,7 @@ use std::io::prelude::*;
 use std::fs::File;
 
 use crate::fuzzer::coverage::{Coverage, CoverageData};
+use crate::fuzzer::error::Error;
 use crate::runner::runner::Runner;
 
 #[derive(Clone)]
@@ -116,7 +118,7 @@ impl SuiRunner {
 impl Runner for SuiRunner {
     type InputType = Vec<u8>;
 
-    fn execute(&mut self, input: Self::InputType) -> Result<Option<Coverage>, (Coverage, String)> {
+    fn execute(&mut self, input: Self::InputType) -> Result<Option<Coverage>, (Coverage, Error)> {
         let mut remote_view = RemoteStore::new();
         remote_view.add_module(self.module.clone());
         let mut session = self.move_vm.new_session(&remote_view);
@@ -140,8 +142,16 @@ impl Runner for SuiRunner {
         match result {
             Ok(_values) => Ok(Some(Self::create_coverage(input.clone(), coverage))),
             Err(err) => {
-                let message = format!("{:?}", err);
-                Err((Self::create_coverage(input.clone(), coverage), message.to_string()))
+                let message = err.message().unwrap().to_string();
+                let error = match err.major_status() {
+                    StatusCode::ABORTED => {
+                        Error::Abort{message: message}
+                    },
+                    _ => {
+                        Error::Unknown{message}
+                    }
+                };
+                Err((Self::create_coverage(input.clone(), coverage), error))
             }
         }
     }

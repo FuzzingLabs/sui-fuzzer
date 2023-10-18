@@ -13,12 +13,14 @@ use crossterm::{
     execute,
 };
 
+use crate::fuzzer::error::Error;
 use crate::fuzzer::stats::Stats;
 use crate::ui::utils::create_event_item;
 
 pub struct UiEventData {
     pub time: time::Duration,
-    pub message: String
+    pub message: String,
+    pub error: Option<Error>
 }
 
 pub enum UiEvent {

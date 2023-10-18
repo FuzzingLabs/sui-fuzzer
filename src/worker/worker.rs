@@ -7,9 +7,10 @@ use crate::fuzzer::stats::Stats; use crate::runner::runner::Runner;
 use crate::mutator::mutator::Mutator;
 use crate::mutator::rng::Rng;
 use crate::fuzzer::coverage::Coverage;
+use crate::fuzzer::error::Error;
 
 pub enum WorkerEvent {
-    NewCrash(Vec<u8>, String),
+    NewCrash(Vec<u8>, Error),
     CoverageUpdateRequest(HashSet<Coverage>),
     CoverageUpdateResponse(HashSet<Coverage>)
 }
@@ -85,11 +86,11 @@ impl Worker {
                         }
                     }
                 },
-                Err((coverage, msg)) => {
+                Err((coverage, error)) => {
                     if !self.coverage_set.contains(&coverage) {
                         self.coverage_set.insert(coverage);
                         self.stats.write().unwrap().secs_since_last_cov = 0;
-                        self.channel.send(WorkerEvent::NewCrash(input.clone(), msg)).unwrap();
+                        self.channel.send(WorkerEvent::NewCrash(input.clone(), error)).unwrap();
                     }
                     self.stats.write().unwrap().crashes += 1;
                 }

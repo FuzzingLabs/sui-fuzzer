@@ -1,20 +1,19 @@
 use bichannel::Channel;
-use std::sync::RwLock;
-use std::sync::Arc;
-use std::time::Instant;
-use std::collections::VecDeque;
-use time::Duration;
 use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::sync::Arc;
+use std::sync::RwLock;
+use std::time::Instant;
+use time::Duration;
 
-use crate::fuzzer::stats::Stats;
 use crate::fuzzer::config::Config;
-use crate::worker::worker::{Worker, WorkerEvent};
-use crate::ui::ui::{Ui, UiEvent, UiEventData};
 use crate::fuzzer::coverage::Coverage;
-
+use crate::fuzzer::stats::Stats;
+use crate::ui::ui::{Ui, UiEvent, UiEventData};
+use crate::worker::worker::{Worker, WorkerEvent};
 // Sui specific imports
-use crate::runner::sui_runner::SuiRunner;
 use crate::mutator::sui_mutator::SuiMutator;
+use crate::runner::sui_runner::SuiRunner;
 
 pub struct Fuzzer {
     // Fuzzer configuration
@@ -28,11 +27,10 @@ pub struct Fuzzer {
     // Global coverage
     coverage_set: HashSet<Coverage>,
     // The user interface
-    ui: Option<Ui>
+    ui: Option<Ui>,
 }
 
 impl Fuzzer {
-    
     pub fn new(config: Config) -> Self {
         let nb_threads = config.nb_threads;
         Fuzzer {
@@ -41,7 +39,7 @@ impl Fuzzer {
             channels: vec![],
             global_stats: Stats::new(),
             coverage_set: HashSet::new(),
-            ui: Some(Ui::new(nb_threads))
+            ui: Some(Ui::new(nb_threads)),
         }
     }
 
@@ -60,15 +58,24 @@ impl Fuzzer {
                 let seed = self.config.seed.unwrap() + (i as u64);
                 let execs_before_cov_update = self.config.execs_before_cov_update;
                 let mutator = Box::new(SuiMutator::new(seed, 12));
-                let _ = std::thread::Builder::new().name(format!("Worker {}", i).to_string()).spawn(move || {
-                    // Creates generic worker and starts it
-                    let mut w = Worker::new(worker, stats, runner, mutator, seed, execs_before_cov_update);
-                    w.run();
-                });
+                let _ = std::thread::Builder::new()
+                    .name(format!("Worker {}", i).to_string())
+                    .spawn(move || {
+                        // Creates generic worker and starts it
+                        let mut w = Worker::new(
+                            worker,
+                            stats,
+                            runner,
+                            mutator,
+                            seed,
+                            execs_before_cov_update,
+                        );
+                        w.run();
+                    });
             }
         }
     }
-    
+
     fn get_global_execs(&self) -> u64 {
         let mut sum: u64 = 0;
         for i in 0..self.config.nb_threads {
@@ -95,7 +102,6 @@ impl Fuzzer {
         let mut events = VecDeque::new();
 
         loop {
-
             // Sum execs
             self.global_stats.execs = self.get_global_execs();
             self.global_stats.crashes = self.get_global_crashes();
@@ -106,20 +112,24 @@ impl Fuzzer {
                 self.global_stats.execs_per_sec = self.global_stats.execs;
                 self.global_stats.time_running += 1;
                 self.global_stats.secs_since_last_cov += 1;
-                self.global_stats.execs_per_sec = self.global_stats.execs_per_sec / self.global_stats.time_running;
+                self.global_stats.execs_per_sec =
+                    self.global_stats.execs_per_sec / self.global_stats.time_running;
             }
 
             // Checks channels for new data
             for chan in &self.channels {
                 if let Ok(event) = chan.try_recv() {
                     // Creates duration used for the ui
-                    let duration = Duration::seconds(self.global_stats.time_running.try_into().unwrap());
+                    let duration =
+                        Duration::seconds(self.global_stats.time_running.try_into().unwrap());
                     match event {
                         WorkerEvent::CoverageUpdateRequest(coverage_set) => {
                             // Gets diffrences between the two coverage sets
                             let binding = self.coverage_set.clone();
-                            let differences_with_main_thread: HashSet<_> = self.coverage_set.difference(&coverage_set).collect();
-                            let differences_with_worker: HashSet<_> = coverage_set.difference(&binding).collect();
+                            let differences_with_main_thread: HashSet<_> =
+                                self.coverage_set.difference(&coverage_set).collect();
+                            let differences_with_worker: HashSet<_> =
+                                coverage_set.difference(&binding).collect();
                             let mut tmp = HashSet::new();
                             for diff in &differences_with_main_thread.clone() {
                                 tmp.insert(diff.to_owned().clone());
@@ -134,31 +144,22 @@ impl Fuzzer {
                                     self.coverage_set.insert(diff.to_owned().clone());
                                     self.global_stats.secs_since_last_cov = 0;
                                     self.global_stats.coverage_size += 1;
-                                    events.push_front
-                                        (
-                                            UiEvent::NewCoverage
-                                            (
-                                                UiEventData { 
-                                                    time: duration,
-                                                    message: String::from_utf8_lossy(&diff.input).to_string()
-                                                }
-                                            )
-                                        );
+                                    events.push_front(UiEvent::NewCoverage(UiEventData {
+                                        time: duration,
+                                        message: String::from_utf8_lossy(&diff.input).to_string(),
+                                        error: None
+                                    }));
                                 }
                             }
-                        },
-                        WorkerEvent::NewCrash(input, _msg) => {
-                            events.push_front
-                                (
-                                    UiEvent::NewCrash
-                                    (
-                                        UiEventData { 
-                                            time: duration,
-                                            message: String::from_utf8_lossy(&input).to_string()
-                                        }
-                                    )
-                                );
-                        },
+                        }
+                        WorkerEvent::NewCrash(input, error) => {
+                            eprintln!("{:?}", error);
+                            events.push_front(UiEvent::NewCrash(UiEventData {
+                                time: duration,
+                                message: String::from_utf8_lossy(&input).to_string(),
+                                error: Some(error)
+                            }));
+                        }
                         _ => unimplemented!(),
                     }
                 }
@@ -166,7 +167,11 @@ impl Fuzzer {
 
             // Run ui
             if self.config.use_ui {
-                if self.ui.as_mut().unwrap().render(&self.global_stats, &events, &self.threads_stats) {
+                if self.ui.as_mut().unwrap().render(
+                    &self.global_stats,
+                    &events,
+                    &self.threads_stats,
+                ) {
                     self.ui.as_mut().unwrap().restore_terminal();
                     eprintln!("Quitting...");
                     break;
@@ -176,5 +181,4 @@ impl Fuzzer {
             }
         }
     }
-
 }
