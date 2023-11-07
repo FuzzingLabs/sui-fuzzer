@@ -28,10 +28,12 @@ pub struct Fuzzer {
     coverage_set: HashSet<Coverage>,
     // The user interface
     ui: Option<Ui>,
+    // The function to target in the contract
+    target_function: String
 }
 
 impl Fuzzer {
-    pub fn new(config: Config) -> Self {
+    pub fn new(config: Config, target_function: &str) -> Self {
         let nb_threads = config.nb_threads;
         Fuzzer {
             config,
@@ -40,6 +42,7 @@ impl Fuzzer {
             global_stats: Stats::new(),
             coverage_set: HashSet::new(),
             ui: Some(Ui::new(nb_threads)),
+            target_function: String::from(target_function)
         }
     }
 
@@ -53,7 +56,7 @@ impl Fuzzer {
             // Change here the runner you want to create
             if let Some(parameter) = &self.config.runner_parameter {
                 // Creates the sui runner with the runner parameter found in the config
-                let runner = Box::new(SuiRunner::new(&parameter.clone()));
+                let runner = Box::new(SuiRunner::new(&parameter.clone(), &self.target_function));
                 // Increment seed so that each worker doesn't do the same thing
                 let seed = self.config.seed.unwrap() + (i as u64);
                 let execs_before_cov_update = self.config.execs_before_cov_update;

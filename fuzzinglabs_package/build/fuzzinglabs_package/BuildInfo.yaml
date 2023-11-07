@@ -10,7 +10,7 @@ compiled_package_info:
     dev_mode: false
     test_mode: false
     generate_docs: false
-    generate_abis: false
+    generate_abis: true
     install_dir: ~
     force_recompilation: false
     lock_file: "./Move.lock"

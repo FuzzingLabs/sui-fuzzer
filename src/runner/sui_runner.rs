@@ -80,11 +80,12 @@ fn combine_signers_and_args(
 pub struct SuiRunner {
     move_vm: MoveVM,
     module: CompiledModule,
+    target_function: String
 }
 
 impl SuiRunner {
 
-    pub fn new(module_path: &str) -> Self {
+    pub fn new(module_path: &str, target_function: &str) -> Self {
         let move_vm = MoveVM::new(vec![]).unwrap();
         // Loading compiled module
         let mut f = File::open(module_path).unwrap();
@@ -94,6 +95,7 @@ impl SuiRunner {
         SuiRunner {
             move_vm,
             module,
+            target_function: String::from(target_function)
         }
     }
 
@@ -132,7 +134,7 @@ impl Runner for SuiRunner {
 
         let result = session.execute_function_bypass_visibility(
             &self.module.self_id(),
-            IdentStr::new("fuzzinglabs").unwrap(),
+            IdentStr::new(&self.target_function).unwrap(),
             ty_args,
             combine_signers_and_args(vec![], serialize_values(vec![&Self::generate_input(input.clone())])),
             &mut UnmeteredGasMeter,

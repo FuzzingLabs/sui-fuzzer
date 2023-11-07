@@ -20,7 +20,6 @@ pub struct Config {
 }
 
 impl Config {
-
     #[allow(dead_code)]
     pub fn default() -> Self {
         Config {
@@ -39,5 +38,4 @@ impl Config {
         let config_string = fs::read_to_string(path).expect("Unable to read config file");
         return serde_json::from_str(&config_string).expect("Could not parse json config file");
     }
-
 }

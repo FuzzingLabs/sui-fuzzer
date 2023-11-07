@@ -15,13 +15,17 @@ struct Args {
     /// Path of the package to fuzz
     #[arg(short, long)]
     config_path: String,
+
+    // The function to target
+    #[arg(short, long)]
+    target_function: String
 }
 
 fn main() {
     let args = Args::parse();
-    if args.config_path != "" {
+    if args.config_path != "" && args.target_function != "" {
         let config = Config::load_config(&args.config_path);
-        let mut fuzzer = Fuzzer::new(config);
+        let mut fuzzer = Fuzzer::new(config, &args.target_function);
         fuzzer.run();
     }
 }

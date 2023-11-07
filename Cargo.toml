@@ -15,10 +15,10 @@ basic_mutator = { git = "https://github.com/gamozolabs/basic_mutator" }
 
 # Sui dependencies
 sui-move-build = { path = "./sui/crates/sui-move-build"}
-move-vm-runtime = { path = "./sui/external-crates/move-execution/v0/move-vm/runtime", package = "move-vm-runtime-v0"}
-move-vm-types = { path = "./sui/external-crates/move/move-vm/types" }
-move-binary-format = { path = "./sui/external-crates/move/move-binary-format" }
-move-core-types = { path = "./sui/external-crates/move/move-core/types" }
+move-vm-runtime = { path = "./sui/external-crates/move/move-execution/v0/move-vm/runtime", package = "move-vm-runtime-v0"}
+move-vm-types = { path = "./sui/external-crates/move/crates/move-vm-types" }
+move-binary-format = { path = "./sui/external-crates/move/crates/move-binary-format" }
+move-core-types = { path = "./sui/external-crates/move/crates/move-core-types" }
 shared-crypto = { path = "./sui/crates/shared-crypto"}
 sui-keys = { path = "./sui/crates/sui-keys"}
 crossterm = "0.27.0"
