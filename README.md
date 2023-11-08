@@ -2,7 +2,7 @@
 
 Fuzzer for SuiMove smartcontracts.
 
-![screenshot](./imgs/screenshot1.png)
+![screenshot](./doc/imgs/screenshot1.png)
 
 ## Usage
 
@@ -12,7 +12,7 @@ You need to clone the repository with the submodules using the following command
 $ git clone --recursive git@github.com:FuzzingLabs/sui-fuzzer.git
 ```
 
-To run the fuzzer just use (with rust anf cargo installed):
+To run the fuzzer just use (with rust and cargo installed):
 
 ```bash
 $ make CONFIG_PATH="./config.json" TARGET_FUNCTION="fuzzinglabs"
