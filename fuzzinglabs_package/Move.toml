@@ -3,7 +3,8 @@ name = "fuzzinglabs_package"
 version = "0.0.1"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/devnet" }
 
 [addresses]
 fuzzinglabs_package = "0x0"
+sui = "0000000000000000000000000000000000000000000000000000000000000002"

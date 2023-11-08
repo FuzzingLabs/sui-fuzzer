@@ -1,7 +1,8 @@
 module fuzzinglabs_package::fuzzinglabs_module {
   use std::vector;
 
-  public fun fuzzinglabs(str: vector<u8>) {
+  // Crash if input is fuzzinglabs
+  public entry fun fuzzinglabs(str: vector<u8>) {
     if (vector::length(&str) == 11) {
       if (*vector::borrow(&str, 0) == 0x66) { // f
         if (*vector::borrow(&str, 1) == 0x75) { // u
