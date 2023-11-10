@@ -34,6 +34,10 @@ Fuzzer for SuiMove smartcontracts.
 
 Since the fuzzer is still a work in progress, you must use the provided *Dockerfile* to test it.
 
+```bash
+$ docker build -t sui-fuzzer .
+```
+
 You need to clone the repository with the submodules using the following command:
 
 ```bash
@@ -55,7 +59,7 @@ Here is an example of config:
   "use_ui": true,
   "nb_threads": 8,
   "seed": 4242,
-  "runner_parameter": "./fuzzinglabs_package/build/fuzzinglabs_package/bytecode_modules/fuzzinglabs_module.mv",
+  "contract_file": "./fuzzinglabs_package/build/fuzzinglabs_package/bytecode_modules/fuzzinglabs_module.mv",
   "execs_before_cov_update": 10000,
   "corpus_dir": "./corpus", // Not implemented yet
   "crashes_dir": "./crashes" // Not implemented yet
