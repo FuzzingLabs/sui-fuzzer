@@ -344,7 +344,6 @@ impl Ui {
                     Axis::default()
                     .title("Time")
                     .style(Style::default().fg(Color::Gray))
-                    // .labels(x_labels)
                     .bounds([0.0, stats.time_running as f64]),
                     )
                 .y_axis(

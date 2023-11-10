@@ -1,10 +1,38 @@
-# Sui Fuzzer
+# Sui Fuzzer WIP
 
 Fuzzer for SuiMove smartcontracts.
 
 ![screenshot](./doc/imgs/screenshot1.png)
 
+## Milestones
+
+### Milestone 1: Discovery & project architecture
+- [x] Testing and analysis of Sui Move and VM internals 
+- [x] Development of the project base (architecture and command line interface)
+- [x] Tutorial for project installation and testing
+- [ ] Identification of arguments and contracts execution requirements
+- [x] Creation MVP
+
+### Milestone 2: Fuzzer improvements
+- [x] Improvement of the project (threading, runtimes perf monitoring)
+- [x] Implementation of coverage-guided fuzzing
+- [ ] Implementation of vulnerability detectors
+- [ ] Add support for property testing methods
+- [ ] Docker and packaging of the fuzzer as a library
+- [ ] Tutorial for running fuzzers and using advanced CLI options
+
+### Milestone 3: Fuzzer finalization
+- [ ] Generation of sequences of calls (stateful fuzzing)
+- [ ] Improvement of contract argument generation (based on )
+- [ ] Improvement of command line options
+- [ ] Improvement of the fuzzing (input file sharing, mutation algorithm, speed)
+- [ ] Create more documentation & tutorials against basic/example contracts
+
 ## Usage
+
+### Important
+
+Since the fuzzer is still a work in progress, you must use the provided *Dockerfile* to test it.
 
 You need to clone the repository with the submodules using the following command:
 

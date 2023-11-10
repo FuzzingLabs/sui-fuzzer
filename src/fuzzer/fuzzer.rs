@@ -54,7 +54,7 @@ impl Fuzzer {
             let stats = Arc::new(RwLock::new(Stats::new()));
             self.threads_stats.push(stats.clone());
             // Change here the runner you want to create
-            if let Some(parameter) = &self.config.runner_parameter {
+            if let Some(parameter) = &self.config.contract_file {
                 // Creates the sui runner with the runner parameter found in the config
                 let runner = Box::new(SuiRunner::new(&parameter.clone(), &self.target_function));
                 // Increment seed so that each worker doesn't do the same thing
