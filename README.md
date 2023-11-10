@@ -35,7 +35,7 @@ Fuzzer for SuiMove smartcontracts.
 Since the fuzzer is still a work in progress, you must use the provided *Dockerfile* to test it.
 
 ```bash
-$ docker build -t sui-fuzzer .
+$ ./docker_run.sh
 ```
 
 You need to clone the repository with the submodules using the following command:
