@@ -1,6 +1,6 @@
-# Sui Fuzzer WIP
+# Sui Fuzzer (WIP)
 
-Fuzzer for SuiMove smartcontracts.
+Fuzzer for Sui Move Smart Contracts.
 
 ![screenshot](./doc/imgs/screenshot1.png)
 
