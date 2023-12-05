@@ -1,5 +1,7 @@
+use super::types::Type;
+
 pub trait Mutator {
 
-    fn mutate(&mut self, input: &Vec<u8>, nb_mutation: usize) -> Vec<u8>;
+    fn mutate(&mut self, inputs: &Vec<Type>, nb_mutation: usize) -> Vec<Type>;
 
 }

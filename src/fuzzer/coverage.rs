@@ -1,8 +1,10 @@
 use std::hash::{Hash, Hasher};
 
+use crate::mutator::types::Type;
+
 #[derive(Debug, Clone)]
 pub struct Coverage {
-    pub input: Vec<u8>,
+    pub inputs: Vec<Type>,
     pub data: Vec<CoverageData>
 }
 

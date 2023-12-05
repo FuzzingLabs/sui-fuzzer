@@ -29,11 +29,13 @@ pub struct Fuzzer {
     // The user interface
     ui: Option<Ui>,
     // The function to target in the contract
+    target_module: String,
+    // The function to target in the contract
     target_function: String
 }
 
 impl Fuzzer {
-    pub fn new(config: Config, target_function: &str) -> Self {
+    pub fn new(config: Config, target_module: &str, target_function: &str) -> Self {
         let nb_threads = config.nb_threads;
         Fuzzer {
             config,
@@ -42,6 +44,7 @@ impl Fuzzer {
             global_stats: Stats::new(),
             coverage_set: HashSet::new(),
             ui: Some(Ui::new(nb_threads)),
+            target_module: String::from(target_module),
             target_function: String::from(target_function)
         }
     }
@@ -56,7 +59,7 @@ impl Fuzzer {
             // Change here the runner you want to create
             if let Some(parameter) = &self.config.contract_file {
                 // Creates the sui runner with the runner parameter found in the config
-                let runner = Box::new(SuiRunner::new(&parameter.clone(), &self.target_function));
+                let runner = Box::new(SuiRunner::new(&parameter.clone(), &self.target_module, &self.target_function));
                 // Increment seed so that each worker doesn't do the same thing
                 let seed = self.config.seed.unwrap() + (i as u64);
                 let execs_before_cov_update = self.config.execs_before_cov_update;
@@ -149,14 +152,14 @@ impl Fuzzer {
                                     self.global_stats.coverage_size += 1;
                                     events.push_front(UiEvent::NewCoverage(UiEventData {
                                         time: duration,
-                                        message: String::from_utf8_lossy(&diff.input).to_string(),
+                                        message: String::from(""),//String::from_utf8_lossy(&diff.inputs[0] as Type::Vector).to_string(),
                                         error: None
                                     }));
                                 }
                             }
                         }
                         WorkerEvent::NewCrash(input, error) => {
-                            eprintln!("{:?}", error);
+                            //eprintln!("{:?}", error);
                             events.push_front(UiEvent::NewCrash(UiEventData {
                                 time: duration,
                                 message: String::from_utf8_lossy(&input).to_string(),
