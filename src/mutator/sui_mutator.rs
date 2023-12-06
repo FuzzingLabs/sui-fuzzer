@@ -33,27 +33,48 @@ impl Mutator for SuiMutator {
                     .mutator
                     .input
                     .extend_from_slice(&[if *b { 1 } else { 0 }]),
-                Type::Vector(_, _) => todo!(),
+                Type::Vector(_, vec) => {
+                    let buffer: Vec<u8> = vec
+                        .iter()
+                        .map(|v| {
+                            if let Type::U8(a) = v {
+                                a.to_owned()
+                            } else {
+                                todo!()
+                            }
+                        })
+                        .collect();
+                    self.mutator.input.extend_from_slice(&buffer);
+                }
             }
 
             self.mutator.mutate(nb_mutation, &EmptyDatabase);
 
             res.push(match input {
-                Type::U8(_) => Type::U8(u8::from_le_bytes(self.mutator.input.try_into().unwrap())),
-                Type::U16(_) => {
-                    Type::U16(u16::from_be_bytes(self.mutator.input.try_into().unwrap()))
-                }
-                Type::U32(_) => {
-                    Type::U32(u32::from_be_bytes(self.mutator.input.try_into().unwrap()))
-                }
-                Type::U64(_) => {
-                    Type::U64(u64::from_be_bytes(self.mutator.input.try_into().unwrap()))
-                }
-                Type::U128(_) => {
-                    Type::U128(u128::from_be_bytes(self.mutator.input.try_into().unwrap()))
-                }
+                Type::U8(_) => Type::U8(u8::from_le_bytes(
+                    self.mutator.input.clone().try_into().unwrap(),
+                )),
+                Type::U16(_) => Type::U16(u16::from_be_bytes(
+                    self.mutator.input.clone().try_into().unwrap(),
+                )),
+                Type::U32(_) => Type::U32(u32::from_be_bytes(
+                    self.mutator.input.clone().try_into().unwrap(),
+                )),
+                Type::U64(_) => Type::U64(u64::from_be_bytes(
+                    self.mutator.input.clone().try_into().unwrap(),
+                )),
+                Type::U128(_) => Type::U128(u128::from_be_bytes(
+                    self.mutator.input.clone().try_into().unwrap(),
+                )),
                 Type::Bool(_) => Type::Bool(self.mutator.input[0] != 0),
-                Type::Vector(_, _) => todo!(),
+                Type::Vector(_, _) => Type::Vector(
+                    Box::new(Type::U8(0)),
+                    self.mutator
+                        .input
+                        .iter()
+                        .map(|a| Type::U8(a.to_owned()))
+                        .collect(),
+                ),
             });
         }
         res

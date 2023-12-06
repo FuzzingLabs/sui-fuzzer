@@ -12,7 +12,7 @@ use crate::mutator::types::Type;
 use crate::runner::runner::Runner;
 
 pub enum WorkerEvent {
-    NewCrash(Vec<u8>, Error),
+    NewCrash(Vec<Type>, Error),
     CoverageUpdateRequest(HashSet<Coverage>),
     CoverageUpdateResponse(HashSet<Coverage>),
 }

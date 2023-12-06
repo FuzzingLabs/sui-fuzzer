@@ -1,8 +1,5 @@
-use move_binary_format::access::ModuleAccess;
 use move_binary_format::errors::VMError;
 use move_binary_format::errors::VMResult;
-use move_binary_format::file_format::FunctionDefinitionIndex;
-use move_binary_format::file_format::StructDefinitionIndex;
 use move_binary_format::CompiledModule;
 use move_bytecode_utils::Modules;
 use move_core_types::account_address::AccountAddress;
@@ -16,6 +13,7 @@ use move_core_types::value::serialize_values;
 use move_core_types::value::MoveValue;
 use move_core_types::vm_status::StatusCode;
 use move_model::model::GlobalEnv;
+use move_model::ty::Type;
 use move_package::compilation::model_builder::ModelBuilder;
 use move_package::BuildConfig;
 use move_package::ModelConfig;
@@ -23,7 +21,6 @@ use move_vm_runtime::move_vm::MoveVM;
 use move_vm_types::gas::UnmeteredGasMeter;
 use std::collections::HashMap;
 use std::path::Path;
-use move_model::ty::Type;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -220,7 +217,7 @@ impl SuiRunner {
                 FuzzerType::U64(value) => res.push(MoveValue::U64(value)),
                 FuzzerType::U128(value) => res.push(MoveValue::U128(value)),
                 FuzzerType::Bool(value) => res.push(MoveValue::Bool(value)),
-                FuzzerType::Vector(value, vec) => {
+                FuzzerType::Vector(_, vec) => {
                     res.push(MoveValue::Vector(Self::generate_inputs(vec)))
                 }
             }
@@ -230,9 +227,8 @@ impl SuiRunner {
 }
 
 impl Runner for SuiRunner {
-
     fn get_target_parameters(&self) -> Vec<FuzzerType> {
-        self.target_parameters
+        self.target_parameters.clone()
     }
 
     fn execute(&mut self, inputs: Vec<FuzzerType>) -> Result<Option<Coverage>, (Coverage, Error)> {

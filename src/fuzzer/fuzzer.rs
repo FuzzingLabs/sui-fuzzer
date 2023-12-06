@@ -9,6 +9,7 @@ use time::Duration;
 use crate::fuzzer::config::Config;
 use crate::fuzzer::coverage::Coverage;
 use crate::fuzzer::stats::Stats;
+use crate::mutator::types::Parameters;
 use crate::ui::ui::{Ui, UiEvent, UiEventData};
 use crate::worker::worker::{Worker, WorkerEvent};
 // Sui specific imports
@@ -152,17 +153,17 @@ impl Fuzzer {
                                     self.global_stats.coverage_size += 1;
                                     events.push_front(UiEvent::NewCoverage(UiEventData {
                                         time: duration,
-                                        message: String::from(""),//String::from_utf8_lossy(&diff.inputs[0] as Type::Vector).to_string(),
+                                        message: format!("{}", Parameters(diff.inputs.clone())),//String::from_utf8_lossy(&diff.inputs[0] as Type::Vector).to_string(),
                                         error: None
                                     }));
                                 }
                             }
                         }
-                        WorkerEvent::NewCrash(input, error) => {
+                        WorkerEvent::NewCrash(inputs, error) => {
                             //eprintln!("{:?}", error);
                             events.push_front(UiEvent::NewCrash(UiEventData {
                                 time: duration,
-                                message: String::from_utf8_lossy(&input).to_string(),
+                                message: format!("{}", Parameters(inputs)), //String::from_utf8_lossy(&inputs).to_string(),
                                 error: Some(error)
                             }));
                         }
