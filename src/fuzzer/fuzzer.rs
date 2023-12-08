@@ -10,11 +10,16 @@ use crate::fuzzer::config::Config;
 use crate::fuzzer::coverage::Coverage;
 use crate::fuzzer::stats::Stats;
 use crate::mutator::types::Parameters;
+use crate::mutator::types::Type;
+use crate::runner::runner::Runner;
 use crate::ui::ui::{Ui, UiEvent, UiEventData};
 use crate::worker::worker::{Worker, WorkerEvent};
 // Sui specific imports
 use crate::mutator::sui_mutator::SuiMutator;
 use crate::runner::sui_runner::SuiRunner;
+
+use super::crash::Crash;
+use super::fuzzer_utils::write_crashfile;
 
 pub struct Fuzzer {
     // Fuzzer configuration
@@ -32,7 +37,9 @@ pub struct Fuzzer {
     // The function to target in the contract
     target_module: String,
     // The function to target in the contract
-    target_function: String
+    target_function: String,
+    // Parameters of the target function
+    target_parameters: Vec<Type>,
 }
 
 impl Fuzzer {
@@ -46,7 +53,8 @@ impl Fuzzer {
             coverage_set: HashSet::new(),
             ui: Some(Ui::new(nb_threads)),
             target_module: String::from(target_module),
-            target_function: String::from(target_function)
+            target_function: String::from(target_function),
+            target_parameters: vec![],
         }
     }
 
@@ -60,7 +68,12 @@ impl Fuzzer {
             // Change here the runner you want to create
             if let Some(parameter) = &self.config.contract_file {
                 // Creates the sui runner with the runner parameter found in the config
-                let runner = Box::new(SuiRunner::new(&parameter.clone(), &self.target_module, &self.target_function));
+                let runner = Box::new(SuiRunner::new(
+                    &parameter.clone(),
+                    &self.target_module,
+                    &self.target_function,
+                ));
+                self.target_parameters = runner.get_target_parameters();
                 // Increment seed so that each worker doesn't do the same thing
                 let seed = self.config.seed.unwrap() + (i as u64);
                 let execs_before_cov_update = self.config.execs_before_cov_update;
@@ -108,6 +121,14 @@ impl Fuzzer {
 
         let mut events = VecDeque::new();
 
+        if let Some(ui) = &mut self.ui {
+            ui.set_target_infos(
+                &self.target_module,
+                &self.target_function,
+                &self.target_parameters,
+            );
+        }
+
         loop {
             // Sum execs
             self.global_stats.execs = self.get_global_execs();
@@ -153,18 +174,19 @@ impl Fuzzer {
                                     self.global_stats.coverage_size += 1;
                                     events.push_front(UiEvent::NewCoverage(UiEventData {
                                         time: duration,
-                                        message: format!("{}", Parameters(diff.inputs.clone())),//String::from_utf8_lossy(&diff.inputs[0] as Type::Vector).to_string(),
-                                        error: None
+                                        message: format!("{}", Parameters(diff.inputs.clone())), //String::from_utf8_lossy(&diff.inputs[0] as Type::Vector).to_string(),
+                                        error: None,
                                     }));
                                 }
                             }
                         }
                         WorkerEvent::NewCrash(inputs, error) => {
                             //eprintln!("{:?}", error);
+                            write_crashfile(&self.config.crashes_dir, Crash::new(&self.target_function, &inputs, &error));
                             events.push_front(UiEvent::NewCrash(UiEventData {
                                 time: duration,
                                 message: format!("{}", Parameters(inputs)), //String::from_utf8_lossy(&inputs).to_string(),
-                                error: Some(error)
+                                error: Some(error),
                             }));
                         }
                         _ => unimplemented!(),

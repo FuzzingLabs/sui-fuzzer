@@ -69,7 +69,7 @@ impl From<FuzzerType> for Type {
             FuzzerType::U64(_) => Type::Primitive(PrimitiveType::U64),
             FuzzerType::U128(_) => Type::Primitive(PrimitiveType::U128),
             FuzzerType::Bool(_) => Type::Primitive(PrimitiveType::Bool),
-            FuzzerType::Vector(t, vec) => Type::Vector(Box::new(Type::from(*t))),
+            FuzzerType::Vector(t, _) => Type::Vector(Box::new(Type::from(*t))),
         }
     }
 }

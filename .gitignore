@@ -1,5 +1,7 @@
 target/
 
+crashes/
+
 Cargo.lock
 
 log

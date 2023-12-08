@@ -261,7 +261,10 @@ impl Runner for SuiRunner {
             Err(err) => {
                 let message = err.message().unwrap().to_string();
                 let error = match err.major_status() {
-                    StatusCode::ABORTED => Error::Abort { message: message },
+                    StatusCode::ABORTED => Error::Abort { message },
+                    StatusCode::ARITHMETIC_ERROR => Error::ArithmeticError { message },
+                    StatusCode::MEMORY_LIMIT_EXCEEDED => Error::MemoryLimitExceeded { message },
+                    StatusCode::OUT_OF_GAS => Error::OutOfGas { message },
                     _ => Error::Unknown { message },
                 };
                 Err((Self::create_coverage(inputs.clone(), coverage), error))

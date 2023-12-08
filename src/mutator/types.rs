@@ -1,6 +1,8 @@
 use std::fmt::Display;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Type {
     U8(u8),
     U16(u16),
@@ -34,7 +36,7 @@ impl Display for Type {
                             }
                         })
                         .collect();
-                    write!(f, "{}", String::from_utf8_lossy(&buffer))
+                    write!(f, "Vector(U8, {})", String::from_utf8_lossy(&buffer))
                 }
                 _ => todo!(),
             },
