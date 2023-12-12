@@ -17,6 +17,8 @@ pub struct Config {
     pub corpus_dir: String,
     // Where to put the crash files
     pub crashes_dir: String,
+    // Fuzzing functions prefix
+    pub fuzz_functions_prefix: String
 }
 
 impl Config {
@@ -30,6 +32,7 @@ impl Config {
             execs_before_cov_update: 10_000,
             corpus_dir: "./corpus".to_string(),
             crashes_dir: "./crashes".to_string(),
+            fuzz_functions_prefix: "fuzz_".to_string()
         }
     }
 

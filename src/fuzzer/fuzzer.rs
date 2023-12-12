@@ -32,6 +32,8 @@ pub struct Fuzzer {
     global_stats: Stats,
     // Global coverage
     coverage_set: HashSet<Coverage>,
+    // Unique crashes set
+    unique_crashes_set: HashSet<Crash>,
     // The user interface
     ui: Option<Ui>,
     // The function to target in the contract
@@ -51,6 +53,7 @@ impl Fuzzer {
             channels: vec![],
             global_stats: Stats::new(),
             coverage_set: HashSet::new(),
+            unique_crashes_set: HashSet::new(),
             ui: Some(Ui::new(nb_threads)),
             target_module: String::from(target_module),
             target_function: String::from(target_function),
@@ -174,18 +177,22 @@ impl Fuzzer {
                                     self.global_stats.coverage_size += 1;
                                     events.push_front(UiEvent::NewCoverage(UiEventData {
                                         time: duration,
-                                        message: format!("{}", Parameters(diff.inputs.clone())), //String::from_utf8_lossy(&diff.inputs[0] as Type::Vector).to_string(),
+                                        message: format!("{}", Parameters(diff.inputs.clone())),
                                         error: None,
                                     }));
                                 }
                             }
                         }
                         WorkerEvent::NewCrash(inputs, error) => {
-                            //eprintln!("{:?}", error);
-                            write_crashfile(&self.config.crashes_dir, Crash::new(&self.target_function, &inputs, &error));
+                            let crash = Crash::new(&self.target_function, &inputs, &error);
+                            if !self.unique_crashes_set.contains(&crash) {
+                                write_crashfile(&self.config.crashes_dir, crash.clone());
+                                self.global_stats.unique_crashes += 1;
+                                self.unique_crashes_set.insert(crash.clone());
+                            }
                             events.push_front(UiEvent::NewCrash(UiEventData {
                                 time: duration,
-                                message: format!("{}", Parameters(inputs)), //String::from_utf8_lossy(&inputs).to_string(),
+                                message: format!("{}", Parameters(inputs)),
                                 error: Some(error),
                             }));
                         }

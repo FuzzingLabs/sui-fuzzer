@@ -2,8 +2,10 @@
   "use_ui": true,
   "nb_threads": 8,
   "seed": 4242,
-  "contract_file": "./examples/fuzzinglabs_package/build/fuzzinglabs_package/bytecode_modules/fuzzinglabs_module.mv",
+  "contract_file": "./examples/arithmetic_errors_package/build/arithmetic_errors_package/bytecode_modules/arithmetic_errors_module.mv",
+  "contract_file_a": "./examples/fuzzinglabs_package/build/fuzzinglabs_package/bytecode_modules/fuzzinglabs_module.mv",
   "execs_before_cov_update": 10000,
   "corpus_dir": "./corpus",
-  "crashes_dir": "./crashes"
+  "crashes_dir": "./crashes",
+  "fuzz_functions_prefix": "fuzz_"
 }

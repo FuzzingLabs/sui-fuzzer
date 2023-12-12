@@ -8,6 +8,7 @@ mod mutator;
 mod runner;
 mod ui;
 mod worker;
+mod detector;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

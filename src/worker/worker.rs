@@ -50,10 +50,6 @@ impl Worker {
         }
     }
 
-    pub fn get_target_parameters(&self) -> Vec<Type> {
-        self.runner.get_target_parameters()
-    }
-
     fn pick_and_mutate_inputs(&mut self) -> Vec<Type> {
         let cov = self
             .coverage_set

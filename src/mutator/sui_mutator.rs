@@ -50,22 +50,38 @@ impl Mutator for SuiMutator {
 
             self.mutator.mutate(nb_mutation, &EmptyDatabase);
 
+            // The size of the input needs to be the right size
             res.push(match input {
-                Type::U8(_) => Type::U8(u8::from_le_bytes(
-                    self.mutator.input.clone().try_into().unwrap(),
-                )),
-                Type::U16(_) => Type::U16(u16::from_be_bytes(
-                    self.mutator.input.clone().try_into().unwrap(),
-                )),
-                Type::U32(_) => Type::U32(u32::from_be_bytes(
-                    self.mutator.input.clone().try_into().unwrap(),
-                )),
-                Type::U64(_) => Type::U64(u64::from_be_bytes(
-                    self.mutator.input.clone().try_into().unwrap(),
-                )),
-                Type::U128(_) => Type::U128(u128::from_be_bytes(
-                    self.mutator.input.clone().try_into().unwrap(),
-                )),
+                Type::U8(_) => {
+                    let mut v = self.mutator.input.clone();
+                    v.resize(1, 0);
+
+                    Type::U8(u8::from_be_bytes(v[0..1].try_into().unwrap()))
+                },
+                Type::U16(_) => {
+                    let mut v = self.mutator.input.clone();
+                    v.resize(2, 0);
+
+                    Type::U16(u16::from_be_bytes(v[0..2].try_into().unwrap()))
+                },
+                Type::U32(_) => {
+                    let mut v = self.mutator.input.clone();
+                    v.resize(4, 0);
+
+                    Type::U32(u32::from_be_bytes(v[0..4].try_into().unwrap()))
+                },
+                Type::U64(_) => {
+                    let mut v = self.mutator.input.clone();
+                    v.resize(8, 0);
+
+                    Type::U64(u64::from_be_bytes(v[0..8].try_into().unwrap()))
+                }
+                Type::U128(_) => {
+                    let mut v = self.mutator.input.clone();
+                    v.resize(16, 0);
+
+                    Type::U128(u128::from_be_bytes(v[0..16].try_into().unwrap()))
+                },
                 Type::Bool(_) => Type::Bool(self.mutator.input[0] != 0),
                 Type::Vector(_, _) => Type::Vector(
                     Box::new(Type::U8(0)),

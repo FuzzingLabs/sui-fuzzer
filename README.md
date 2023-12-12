@@ -10,7 +10,7 @@ Fuzzer for Sui Move Smart Contracts.
 - [x] Testing and analysis of Sui Move and VM internals 
 - [x] Development of the project base (architecture and command line interface)
 - [x] Tutorial for project installation and testing
-- [ ] Identification of arguments and contracts execution requirements
+- [x] Identification of arguments and contracts execution requirements
 - [x] Creation MVP
 
 ### Milestone 2: Fuzzer improvements

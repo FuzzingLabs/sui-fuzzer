@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use strum::{EnumVariantNames, Display};
 
-#[derive(Debug, Clone, Display ,EnumVariantNames, Serialize, Deserialize)]
+#[derive(Debug, Clone, Display ,EnumVariantNames, Serialize, Deserialize, Hash, PartialEq, Eq)]
 #[allow(dead_code)]
 pub enum Error {
     Abort { message: String },

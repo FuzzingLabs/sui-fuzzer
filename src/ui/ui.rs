@@ -209,6 +209,7 @@ impl Ui {
         }
         let text = vec![
             text::Line::from(format!("Crashes: {}", stats.crashes)),
+            text::Line::from(format!("Unique crashes: {}", stats.unique_crashes)),
             text::Line::from(format!("Total execs: {}", stats.execs)),
             text::Line::from(format!("Execs/s: {}", stats.execs_per_sec)),
             text::Line::from(format!(

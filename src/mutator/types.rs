@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub enum Type {
     U8(u8),
     U16(u16),

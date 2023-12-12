@@ -259,7 +259,10 @@ impl Runner for SuiRunner {
         match result {
             Ok(_values) => Ok(Some(Self::create_coverage(inputs.clone(), coverage))),
             Err(err) => {
-                let message = err.message().unwrap().to_string();
+                let mut message = String::from("");
+                if let Some(m) = err.message() {
+                    message = m.to_string();
+                }
                 let error = match err.major_status() {
                     StatusCode::ABORTED => Error::Abort { message },
                     StatusCode::ARITHMETIC_ERROR => Error::ArithmeticError { message },
