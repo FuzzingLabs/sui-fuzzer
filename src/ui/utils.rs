@@ -18,7 +18,6 @@ pub fn create_event_item(
         )),
         ": ".into(),
         Span::styled(event_type.clone(), style),
-        " with input: ".into(),
         message.clone().into(),
     ])])
 }

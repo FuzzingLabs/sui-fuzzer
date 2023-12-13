@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use move_binary_format::access::ModuleAccess;
 use move_binary_format::file_format::{FunctionDefinitionIndex, StructDefinitionIndex};
 use move_binary_format::CompiledModule;
@@ -12,6 +14,11 @@ use move_model::model::ModuleData;
 use move_model::model::ModuleId as ModelModuleId;
 use move_model::model::StructId;
 use move_model::ty::{PrimitiveType, Type};
+
+use move_package::compilation::model_builder::ModelBuilder;
+use move_package::BuildConfig;
+use move_package::ModelConfig;
+use move_bytecode_utils::Modules;
 
 use crate::mutator::types::Type as FuzzerType;
 
@@ -103,4 +110,77 @@ impl From<Type> for FuzzerType {
             Type::Var(_) => todo!(),
         }
     }
+}
+
+pub fn generate_abi_from_source(path: &str, module_name: &str, function_name: &str) -> Vec<Type> {
+    let params;
+
+    let build_config = BuildConfig {
+        skip_fetch_latest_git_deps: true,
+        ..Default::default()
+    };
+
+    let resolv_graph = build_config
+        .resolution_graph_for_package(Path::new(&path), &mut std::io::stderr())
+        .unwrap();
+
+    let source_env = ModelBuilder::create(
+        resolv_graph,
+        ModelConfig {
+            all_files_as_targets: false,
+            target_filter: None,
+        },
+    )
+    .build_model()
+    .unwrap();
+
+    let module_env = source_env
+        .get_modules()
+        .find(|m| m.matches_name(module_name));
+
+    if let Some(env) = module_env {
+        let func = env
+            .get_functions()
+            .find(|f| f.get_name_str() == function_name);
+        if let Some(f) = func {
+            params = f.get_parameters().iter().map(|p| p.1.clone()).collect();
+        } else {
+            panic!("Could not find target function !");
+        }
+    } else {
+        panic!("Could not find target module !");
+    }
+    params
+}
+
+pub fn generate_abi_from_bin(
+    module: &CompiledModule,
+    module_name: &str,
+    function_name: &str,
+) -> Vec<Type> {
+    let params;
+
+    let modules = [module.clone()];
+    let module_map = Modules::new(modules.iter());
+    let dep_graph = module_map.compute_dependency_graph();
+    let topo_order = dep_graph.compute_topological_order().unwrap();
+
+    let mut env = GlobalEnv::new();
+    add_modules_to_model(&mut env, topo_order);
+
+    let module_env = env.get_modules().find(|m| m.matches_name(module_name));
+
+    if let Some(env) = module_env {
+        let func = env
+            .get_functions()
+            .find(|f| f.get_name_str() == function_name);
+        if let Some(f) = func {
+            params = f.get_parameter_types();
+        } else {
+            panic!("Could not find target function !");
+        }
+    } else {
+        panic!("Could not find target module !");
+    }
+    params
 }

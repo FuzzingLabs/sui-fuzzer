@@ -24,11 +24,11 @@ impl Mutator for SuiMutator {
         for input in inputs {
             self.mutator.input.clear();
             match input {
-                Type::U8(v) => self.mutator.input.extend_from_slice(&v.to_le_bytes()),
-                Type::U16(v) => self.mutator.input.extend_from_slice(&v.to_le_bytes()),
-                Type::U32(v) => self.mutator.input.extend_from_slice(&v.to_le_bytes()),
-                Type::U64(v) => self.mutator.input.extend_from_slice(&v.to_le_bytes()),
-                Type::U128(v) => self.mutator.input.extend_from_slice(&v.to_le_bytes()),
+                Type::U8(v) => self.mutator.input.extend_from_slice(&v.to_be_bytes()),
+                Type::U16(v) => self.mutator.input.extend_from_slice(&v.to_be_bytes()),
+                Type::U32(v) => self.mutator.input.extend_from_slice(&v.to_be_bytes()),
+                Type::U64(v) => self.mutator.input.extend_from_slice(&v.to_be_bytes()),
+                Type::U128(v) => self.mutator.input.extend_from_slice(&v.to_be_bytes()),
                 Type::Bool(b) => self
                     .mutator
                     .input

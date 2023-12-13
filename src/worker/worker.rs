@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
+use crate::detector::detector::{new_detector, AvailableDetector, Detector};
 use crate::fuzzer::coverage::Coverage;
 use crate::fuzzer::error::Error;
 use crate::fuzzer::stats::Stats;
@@ -15,6 +16,7 @@ pub enum WorkerEvent {
     NewCrash(Vec<Type>, Error),
     CoverageUpdateRequest(HashSet<Coverage>),
     CoverageUpdateResponse(HashSet<Coverage>),
+    DetectorTriggered(AvailableDetector, Option<String>)
 }
 
 pub struct Worker {
@@ -25,6 +27,7 @@ pub struct Worker {
     coverage_set: HashSet<Coverage>,
     rng: Rng,
     execs_before_cov_update: u64,
+    detectors: Vec<Box<dyn Detector>>,
 }
 
 impl Worker {
@@ -35,7 +38,12 @@ impl Worker {
         mutator: Box<dyn Mutator>,
         seed: u64,
         execs_before_cov_update: u64,
+        available_detectors: Option<Vec<AvailableDetector>>,
     ) -> Self {
+        let mut detectors = vec![];
+        if let Some(values) = available_detectors {
+            detectors = Self::init_detectors(&values);
+        }
         Worker {
             channel,
             stats,
@@ -47,7 +55,16 @@ impl Worker {
                 exp_disabled: false,
             },
             execs_before_cov_update,
+            detectors,
         }
+    }
+
+    fn init_detectors(detectors: &Vec<AvailableDetector>) -> Vec<Box<dyn Detector>> {
+        let mut result = vec![];
+        for detector in detectors {
+            result.push(new_detector(detector));
+        }
+        result
     }
 
     fn pick_and_mutate_inputs(&mut self) -> Vec<Type> {
@@ -75,6 +92,17 @@ impl Worker {
         res
     }
 
+    fn execute_detectors(&self, cov: &Coverage, err: Option<&Error>) {
+        for detector in &self.detectors {
+            let (detected, message) = detector.detect(cov, err.cloned());
+            if detected {
+                self.channel
+                    .send(WorkerEvent::DetectorTriggered(detector.get_type(), message))
+                    .unwrap();
+            }
+        }
+    }
+
     pub fn run(&mut self) {
         // Utils for execs per sec
         let mut execs_per_sec_timer = Instant::now();
@@ -100,6 +128,8 @@ impl Worker {
             match exec_result {
                 Ok(cov) => {
                     if let Some(coverage) = cov {
+                        // Execute all activated detectors
+                        self.execute_detectors(&coverage, None);
                         if !self.coverage_set.contains(&coverage) {
                             self.coverage_set.insert(coverage);
                             self.stats.write().unwrap().secs_since_last_cov = 0;
@@ -107,6 +137,8 @@ impl Worker {
                     }
                 }
                 Err((coverage, error)) => {
+                    // Execute all activated detectors
+                    self.execute_detectors(&coverage, Some(&error));
                     if !self.coverage_set.contains(&coverage) {
                         self.coverage_set.insert(coverage);
                         self.stats.write().unwrap().secs_since_last_cov = 0;

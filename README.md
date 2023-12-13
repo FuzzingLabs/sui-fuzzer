@@ -16,7 +16,7 @@ Fuzzer for Sui Move Smart Contracts.
 ### Milestone 2: Fuzzer improvements
 - [x] Improvement of the project (threading, runtimes perf monitoring)
 - [x] Implementation of coverage-guided fuzzing
-- [ ] Implementation of vulnerability detectors
+- [x] Implementation of vulnerability detectors
 - [ ] Add support for property testing methods
 - [ ] Docker and packaging of the fuzzer as a library
 - [ ] Tutorial for running fuzzers and using advanced CLI options

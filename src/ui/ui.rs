@@ -26,6 +26,7 @@ pub struct UiEventData {
 pub enum UiEvent {
     NewCoverage(UiEventData),
     NewCrash(UiEventData),
+    DetectorTriggered(UiEventData),
 }
 
 // Data to be displayed on the tui
@@ -247,15 +248,9 @@ impl Ui {
         frame.render_widget(paragraph, infos_chunk[0]);
 
         let text = vec![
-            text::Line::from(vec![Span::styled(
-                "Target: ",
-                Style::new().green(),
-            )]),
+            text::Line::from(vec![Span::styled("Target: ", Style::new().green())]),
             text::Line::from(format!("{}::{}", target_module, target_function)),
-            text::Line::from(vec![Span::styled(
-                "Parameters: ",
-                Style::new().green(),
-            )]),
+            text::Line::from(vec![Span::styled("Parameters: ", Style::new().green())]),
             text::Line::from(format!("{:?}", target_parameters)),
         ];
 
@@ -332,12 +327,29 @@ impl Ui {
                         .fg(Color::Yellow)
                         .add_modifier(Modifier::BOLD);
                     let event_type = "COVERAGE".to_string();
-                    create_event_item(data.time, style, event_type, data.message.clone())
+                    create_event_item(
+                        data.time,
+                        style,
+                        event_type,
+                        format!(" with input: {}", data.message),
+                    )
                 }
                 UiEvent::NewCrash(data) => {
                     let style = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
                     let error = data.error.clone().unwrap();
                     let event_type = format!("CRASH Type: {}", error).to_string();
+                    create_event_item(
+                        data.time,
+                        style,
+                        event_type,
+                        format!(" with input: {}", data.message),
+                    )
+                }
+                UiEvent::DetectorTriggered(data) => {
+                    let style = Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD);
+                    let event_type = format!("Detector triggered: ").to_string();
                     create_event_item(data.time, style, event_type, data.message.clone())
                 }
             })

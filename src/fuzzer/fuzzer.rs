@@ -14,6 +14,7 @@ use crate::mutator::types::Type;
 use crate::runner::runner::Runner;
 use crate::ui::ui::{Ui, UiEvent, UiEventData};
 use crate::worker::worker::{Worker, WorkerEvent};
+use crate::AvailableDetector;
 // Sui specific imports
 use crate::mutator::sui_mutator::SuiMutator;
 use crate::runner::sui_runner::SuiRunner;
@@ -42,10 +43,17 @@ pub struct Fuzzer {
     target_function: String,
     // Parameters of the target function
     target_parameters: Vec<Type>,
+    // Activated detectors
+    detectors: Option<Vec<AvailableDetector>>,
 }
 
 impl Fuzzer {
-    pub fn new(config: Config, target_module: &str, target_function: &str) -> Self {
+    pub fn new(
+        config: Config,
+        target_module: &str,
+        target_function: &str,
+        detectors: Option<&Vec<AvailableDetector>>,
+    ) -> Self {
         let nb_threads = config.nb_threads;
         Fuzzer {
             config,
@@ -58,6 +66,7 @@ impl Fuzzer {
             target_module: String::from(target_module),
             target_function: String::from(target_function),
             target_parameters: vec![],
+            detectors: detectors.cloned(),
         }
     }
 
@@ -81,6 +90,7 @@ impl Fuzzer {
                 let seed = self.config.seed.unwrap() + (i as u64);
                 let execs_before_cov_update = self.config.execs_before_cov_update;
                 let mutator = Box::new(SuiMutator::new(seed, 12));
+                let detectors = self.detectors.clone();
                 let _ = std::thread::Builder::new()
                     .name(format!("Worker {}", i).to_string())
                     .spawn(move || {
@@ -92,6 +102,7 @@ impl Fuzzer {
                             mutator,
                             seed,
                             execs_before_cov_update,
+                            detectors
                         );
                         w.run();
                     });
@@ -194,6 +205,17 @@ impl Fuzzer {
                                 time: duration,
                                 message: format!("{}", Parameters(inputs)),
                                 error: Some(error),
+                            }));
+                        }
+                        WorkerEvent::DetectorTriggered(detector, message) => {
+                            let mut final_message = format!("{:?}", detector);
+                            if let Some(m) = message {
+                                final_message = format!("{:?} -> {}", detector, m);
+                            }
+                            events.push_front(UiEvent::DetectorTriggered(UiEventData {
+                                time: duration,
+                                message: final_message,
+                                error: None,
                             }));
                         }
                         _ => unimplemented!(),

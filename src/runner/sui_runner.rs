@@ -1,7 +1,6 @@
 use move_binary_format::errors::VMError;
 use move_binary_format::errors::VMResult;
 use move_binary_format::CompiledModule;
-use move_bytecode_utils::Modules;
 use move_core_types::account_address::AccountAddress;
 use move_core_types::identifier::IdentStr;
 use move_core_types::language_storage::ModuleId;
@@ -12,15 +11,10 @@ use move_core_types::resolver::ResourceResolver;
 use move_core_types::value::serialize_values;
 use move_core_types::value::MoveValue;
 use move_core_types::vm_status::StatusCode;
-use move_model::model::GlobalEnv;
 use move_model::ty::Type;
-use move_package::compilation::model_builder::ModelBuilder;
-use move_package::BuildConfig;
-use move_package::ModelConfig;
 use move_vm_runtime::move_vm::MoveVM;
 use move_vm_types::gas::UnmeteredGasMeter;
 use std::collections::HashMap;
-use std::path::Path;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -30,7 +24,8 @@ use crate::fuzzer::error::Error;
 use crate::mutator::types::Type as FuzzerType;
 use crate::runner::runner::Runner;
 
-use super::sui_runner_utils::add_modules_to_model;
+use super::sui_runner_utils::generate_abi_from_bin;
+use super::sui_runner_utils::generate_abi_from_source;
 
 #[derive(Clone)]
 pub struct RemoteStore {
@@ -101,11 +96,11 @@ impl SuiRunner {
         let mut buffer = Vec::new();
         f.read_to_end(&mut buffer).unwrap();
         let module = CompiledModule::deserialize_with_defaults(&buffer).unwrap();
-        let with_source = true;
+        let with_source = false;
         let params = if with_source {
-            Self::generate_abi_from_source(&module_path, target_module, target_function)
+            generate_abi_from_source(&module_path, target_module, target_function)
         } else {
-            Self::generate_abi_from_bin(&module, target_module, target_function)
+            generate_abi_from_bin(&module, target_module, target_function)
         };
         SuiRunner {
             move_vm,
@@ -121,79 +116,6 @@ impl SuiRunner {
             res.push(FuzzerType::from(param));
         }
         res
-    }
-
-    fn generate_abi_from_source(path: &str, module_name: &str, function_name: &str) -> Vec<Type> {
-        let params;
-
-        let build_config = BuildConfig {
-            skip_fetch_latest_git_deps: true,
-            ..Default::default()
-        };
-
-        let resolv_graph = build_config
-            .resolution_graph_for_package(Path::new(&path), &mut std::io::stderr())
-            .unwrap();
-
-        let source_env = ModelBuilder::create(
-            resolv_graph,
-            ModelConfig {
-                all_files_as_targets: false,
-                target_filter: None,
-            },
-        )
-        .build_model()
-        .unwrap();
-
-        let module_env = source_env
-            .get_modules()
-            .find(|m| m.matches_name(module_name));
-
-        if let Some(env) = module_env {
-            let func = env
-                .get_functions()
-                .find(|f| f.get_name_str() == function_name);
-            if let Some(f) = func {
-                params = f.get_parameters().iter().map(|p| p.1.clone()).collect();
-            } else {
-                panic!("Could not find target function !");
-            }
-        } else {
-            panic!("Could not find target module !");
-        }
-        params
-    }
-
-    fn generate_abi_from_bin(
-        module: &CompiledModule,
-        module_name: &str,
-        function_name: &str,
-    ) -> Vec<Type> {
-        let params;
-
-        let modules = [module.clone()];
-        let module_map = Modules::new(modules.iter());
-        let dep_graph = module_map.compute_dependency_graph();
-        let topo_order = dep_graph.compute_topological_order().unwrap();
-
-        let mut env = GlobalEnv::new();
-        add_modules_to_model(&mut env, topo_order);
-
-        let module_env = env.get_modules().find(|m| m.matches_name(module_name));
-
-        if let Some(env) = module_env {
-            let func = env
-                .get_functions()
-                .find(|f| f.get_name_str() == function_name);
-            if let Some(f) = func {
-                params = f.get_parameters().iter().map(|p| p.1.clone()).collect();
-            } else {
-                panic!("Could not find target function !");
-            }
-        } else {
-            panic!("Could not find target module !");
-        }
-        params
     }
 
     fn create_coverage(inputs: Vec<FuzzerType>, cov: Vec<u16>) -> Coverage {
@@ -259,6 +181,7 @@ impl Runner for SuiRunner {
         match result {
             Ok(_values) => Ok(Some(Self::create_coverage(inputs.clone(), coverage))),
             Err(err) => {
+                eprintln!("{:}", err);
                 let mut message = String::from("");
                 if let Some(m) = err.message() {
                     message = m.to_string();

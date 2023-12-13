@@ -10,16 +10,18 @@ compiled_package_info:
     dev_mode: false
     test_mode: false
     generate_docs: false
-    generate_abis: false
     install_dir: ~
     force_recompilation: false
-    lock_file: ~
-    additional_named_addresses: {}
+    lock_file: "./Move.lock"
     fetch_deps_only: false
     skip_fetch_latest_git_deps: false
-    default_flavor: ~
+    default_flavor: sui
     default_edition: ~
     deps_as_root: false
+    silence_warnings: false
+    warnings_are_errors: false
+    additional_named_addresses: {}
+    no_lint: false
 dependencies:
   - MoveStdlib
   - Sui
