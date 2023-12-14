@@ -69,7 +69,16 @@ The fuzzer has a few more options.
 You can list all the available fuzzing functions in the given module using the following command:
 
 ```bash
-$ make list_functions CONFIG_PATH="./config.json"
+$ make list_functions CONFIG_PATH="./config.json" TARGET_MODULE="loop_module"
+```
+
+A fuzzing function example is in **./examples/loop_package**.
+
+You should have the following output:
+
+```
+Available functions starting with "fuzz_":
+- loop_module::fuzz_loop
 ```
 
 ### Detectors

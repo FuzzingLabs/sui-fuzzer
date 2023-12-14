@@ -3,6 +3,7 @@ use detector::detector::AvailableDetector;
 
 use crate::fuzzer::config::Config;
 use crate::fuzzer::fuzzer::Fuzzer;
+use crate::runner::sui_runner_utils::get_fuzz_functions_from_bin;
 
 mod detector;
 mod fuzzer;
@@ -27,12 +28,7 @@ struct Args {
     target_function: Option<String>,
 
     /// Detectors to use
-    #[arg(
-        short,
-        long,
-        value_delimiter = ',',
-        required = false
-    )]
+    #[arg(short, long, value_delimiter = ',', required = false)]
     detectors: Option<Vec<AvailableDetector>>,
 
     /// Show list of functions starting with the prefix set in config
@@ -44,10 +40,25 @@ fn main() {
     let args = Args::parse();
     let config = Config::load_config(&args.config_path);
     if args.list_functions {
-        println!(
-            "Available functions starting with \"{}\":",
-            config.fuzz_functions_prefix
-        );
+        if let Some(target_module) = args.target_module {
+            if let Some(contract_file) = config.contract_file {
+                println!(
+                    "Available functions starting with \"{}\":",
+                    config.fuzz_functions_prefix
+                );
+                for function in get_fuzz_functions_from_bin(
+                    &contract_file,
+                    &target_module,
+                    &config.fuzz_functions_prefix,
+                ) {
+                    println!("- {}", function);
+                }
+            } else {
+                println!("Missing contract file in configuration !");
+            }
+        } else {
+            println!("Missing target module !");
+        }
     } else if args.config_path != "" && args.target_function != None && args.target_module != None {
         let mut fuzzer = Fuzzer::new(
             config,

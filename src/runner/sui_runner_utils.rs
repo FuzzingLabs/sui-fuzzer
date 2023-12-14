@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::Read;
 use std::path::Path;
 
 use move_binary_format::access::ModuleAccess;
@@ -6,19 +8,19 @@ use move_binary_format::CompiledModule;
 use move_model::addr_to_big_uint;
 use move_model::ast::ModuleName;
 use move_model::ast::Spec;
-use move_model::model::FunId;
 use move_model::model::FunctionData;
 use move_model::model::GlobalEnv;
 use move_model::model::Loc;
 use move_model::model::ModuleData;
 use move_model::model::ModuleId as ModelModuleId;
 use move_model::model::StructId;
+use move_model::model::{FunId, ModuleEnv};
 use move_model::ty::{PrimitiveType, Type};
 
+use move_bytecode_utils::Modules;
 use move_package::compilation::model_builder::ModelBuilder;
 use move_package::BuildConfig;
 use move_package::ModelConfig;
-use move_bytecode_utils::Modules;
 
 use crate::mutator::types::Type as FuzzerType;
 
@@ -183,4 +185,38 @@ pub fn generate_abi_from_bin(
         panic!("Could not find target module !");
     }
     params
+}
+
+pub fn load_compiled_module(path: &str) -> CompiledModule {
+    let mut f = File::open(path).unwrap();
+    let mut buffer = Vec::new();
+    f.read_to_end(&mut buffer).unwrap();
+    CompiledModule::deserialize_with_defaults(&buffer).unwrap()
+}
+
+pub fn get_fuzz_functions_from_bin(path: &str, module_name: &str, prefix: &str) -> Vec<String> {
+    let mut functions = vec![];
+
+    let module = load_compiled_module(path);
+
+    let modules = [module.clone()];
+    let module_map = Modules::new(modules.iter());
+    let dep_graph = module_map.compute_dependency_graph();
+    let topo_order = dep_graph.compute_topological_order().unwrap();
+
+    let mut env = GlobalEnv::new();
+    add_modules_to_model(&mut env, topo_order);
+
+    let module_env = env.get_modules().find(|m| m.matches_name(module_name));
+
+    if let Some(env) = module_env {
+        for f in env.get_functions() {
+            if f.get_name_str().starts_with(prefix) {
+                functions.push(f.get_full_name_str());
+            }
+        }
+    } else {
+        panic!("Could not find target module !");
+    }
+    functions
 }

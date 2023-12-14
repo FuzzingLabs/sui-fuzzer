@@ -17,9 +17,9 @@ Fuzzer for Sui Move Smart Contracts.
 - [x] Improvement of the project (threading, runtimes perf monitoring)
 - [x] Implementation of coverage-guided fuzzing
 - [x] Implementation of vulnerability detectors
-- [ ] Add support for property testing methods
-- [ ] Docker and packaging of the fuzzer as a library
-- [ ] Tutorial for running fuzzers and using advanced CLI options
+- [x] Add support for property testing methods
+- [x] Docker and packaging of the fuzzer as a library
+- [x] Tutorial for running fuzzers and using advanced CLI options
 
 ### Milestone 3: Fuzzer finalization
 - [ ] Generation of sequences of calls (stateful fuzzing)
@@ -30,14 +30,6 @@ Fuzzer for Sui Move Smart Contracts.
 
 ## Usage
 
-### Important
-
-Since the fuzzer is still a work in progress, you must use the provided *Dockerfile* to test it.
-
-```bash
-$ ./docker_run.sh
-```
-
 You need to clone the repository with the submodules using the following command:
 
 ```bash
@@ -47,7 +39,7 @@ $ git clone --recursive git@github.com:FuzzingLabs/sui-fuzzer.git
 To run the fuzzer just use (with rust and cargo installed):
 
 ```bash
-$ make CONFIG_PATH="./config.json" TARGET_FUNCTION="fuzzinglabs"
+$ make CONFIG_PATH="./config.json" TARGET_MODULE="fuzzinglabs_module" TARGET_FUNCTION="fuzzinglabs"
 ```
 
 You need to have a compiled SuiMove module path in the *runner_parameter* item in the config.
@@ -56,12 +48,23 @@ Here is an example of config:
 
 ```json
 {
-  "use_ui": true,
-  "nb_threads": 8,
-  "seed": 4242,
-  "contract_file": "./fuzzinglabs_package/build/fuzzinglabs_package/bytecode_modules/fuzzinglabs_module.mv",
-  "execs_before_cov_update": 10000,
-  "corpus_dir": "./corpus", // Not implemented yet
-  "crashes_dir": "./crashes" // Not implemented yet
+  "use_ui": true, // Do you want the nice UI or not ?
+  "nb_threads": 8, // The number of threads used by the fuzzer
+  "seed": 4242, // The inital seed
+  "contract_file": "./examples/fuzzinglabs_package/build/fuzzinglabs_package/bytecode_modules/fuzzinglabs_module.mv", // The path to the compiled module
+  "execs_before_cov_update": 10000, // When the coverage is shared between the threads (don't modify if you don't know why)
+  "corpus_dir": "./corpus", // Path to where the corpus will be written (milestone 3)
+  "crashes_dir": "./crashes", // Path to where the crashfiles will be written
+  "fuzz_functions_prefix": "fuzz_" // Fuzzing functions prefix (can be listed by the fuzzer)
 }
+```
+
+> You can find more information on how to use the fuzzer in **./doc/how_to_use.md**.
+
+## Using Docker
+
+You can also use the provided **docker_run.sh** script to launch it in a container, use the same arguments for the script as for the Makefile (Documentation in **./doc/how_to_use.md**).
+
+```bash
+$ ./docker_run.sh CONFIG_PATH="./config.json" TARGET_MODULE="fuzzinglabs_module" TARGET_FUNCTION="fuzzinglabs"
 ```

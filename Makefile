@@ -1,4 +1,5 @@
 all:
+	cargo build --release
 	if [ -z "$(DETECTORS)" ]; then \
             	cargo run --release -- --config-path $(CONFIG_PATH) --target-module $(TARGET_MODULE) --target-function $(TARGET_FUNCTION) 2> log; \
         else \
@@ -7,5 +8,5 @@ all:
 
 
 list_functions:
-	cargo run --release -- --config-path $(CONFIG_PATH) -l
+	cargo run --release -- --config-path $(CONFIG_PATH) --target-module $(TARGET_MODULE) -l
 

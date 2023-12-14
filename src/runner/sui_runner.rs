@@ -26,6 +26,7 @@ use crate::runner::runner::Runner;
 
 use super::sui_runner_utils::generate_abi_from_bin;
 use super::sui_runner_utils::generate_abi_from_source;
+use super::sui_runner_utils::load_compiled_module;
 
 #[derive(Clone)]
 pub struct RemoteStore {
@@ -92,10 +93,7 @@ impl SuiRunner {
     pub fn new(module_path: &str, target_module: &str, target_function: &str) -> Self {
         let move_vm = MoveVM::new(vec![]).unwrap();
         // Loading compiled module
-        let mut f = File::open(module_path).unwrap();
-        let mut buffer = Vec::new();
-        f.read_to_end(&mut buffer).unwrap();
-        let module = CompiledModule::deserialize_with_defaults(&buffer).unwrap();
+        let module = load_compiled_module(module_path);
         let with_source = false;
         let params = if with_source {
             generate_abi_from_source(&module_path, target_module, target_function)
