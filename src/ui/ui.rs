@@ -17,12 +17,14 @@ use crate::fuzzer::stats::Stats;
 use crate::ui::utils::create_event_item;
 use crate::{fuzzer::error::Error, mutator::types::Type};
 
+#[derive(Debug, Clone)]
 pub struct UiEventData {
     pub time: time::Duration,
     pub message: String,
     pub error: Option<Error>,
 }
 
+#[derive(Debug, Clone)]
 pub enum UiEvent {
     NewCoverage(UiEventData),
     NewCrash(UiEventData),

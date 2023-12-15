@@ -1,5 +1,5 @@
 {
-  "use_ui": true,
+  "use_ui": false,
   "nb_threads": 8,
   "seed": 4242,
   "contract_file": "./examples/fuzzinglabs_package/build/fuzzinglabs_package/bytecode_modules/fuzzinglabs_module.mv",

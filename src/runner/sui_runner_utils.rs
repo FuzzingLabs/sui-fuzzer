@@ -8,13 +8,13 @@ use move_binary_format::CompiledModule;
 use move_model::addr_to_big_uint;
 use move_model::ast::ModuleName;
 use move_model::ast::Spec;
+use move_model::model::FunId;
 use move_model::model::FunctionData;
 use move_model::model::GlobalEnv;
 use move_model::model::Loc;
 use move_model::model::ModuleData;
 use move_model::model::ModuleId as ModelModuleId;
 use move_model::model::StructId;
-use move_model::model::{FunId, ModuleEnv};
 use move_model::ty::{PrimitiveType, Type};
 
 use move_bytecode_utils::Modules;

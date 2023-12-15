@@ -16,9 +16,6 @@ use move_vm_runtime::move_vm::MoveVM;
 use move_vm_types::gas::UnmeteredGasMeter;
 use std::collections::HashMap;
 
-use std::fs::File;
-use std::io::prelude::*;
-
 use crate::fuzzer::coverage::{Coverage, CoverageData};
 use crate::fuzzer::error::Error;
 use crate::mutator::types::Type as FuzzerType;

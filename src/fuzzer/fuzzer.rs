@@ -55,6 +55,11 @@ impl Fuzzer {
         detectors: Option<&Vec<AvailableDetector>>,
     ) -> Self {
         let nb_threads = config.nb_threads;
+        let ui = if config.use_ui {
+            Some(Ui::new(nb_threads))
+        } else {
+            None
+        };
         Fuzzer {
             config,
             threads_stats: vec![],
@@ -62,7 +67,7 @@ impl Fuzzer {
             global_stats: Stats::new(),
             coverage_set: HashSet::new(),
             unique_crashes_set: HashSet::new(),
-            ui: Some(Ui::new(nb_threads)),
+            ui,
             target_module: String::from(target_module),
             target_function: String::from(target_function),
             target_parameters: vec![],
@@ -102,7 +107,7 @@ impl Fuzzer {
                             mutator,
                             seed,
                             execs_before_cov_update,
-                            detectors
+                            detectors,
                         );
                         w.run();
                     });
@@ -235,7 +240,14 @@ impl Fuzzer {
                     break;
                 }
             } else {
-                // TODO Implement simple println ui
+                for event in events.clone().into_iter() {
+                    match event {
+                        UiEvent::NewCoverage(data) => println!("New coverage: {}", data.message),
+                        UiEvent::NewCrash(data) => println!("New crash: {} {}", data.error.unwrap(), data.message),
+                        UiEvent::DetectorTriggered(data) => println!("Detector triggered: {}", data.message),
+                    }
+                }
+                events.clear();
             }
         }
     }
