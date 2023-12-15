@@ -239,7 +239,7 @@ impl Ui {
             .split(chunks[0]);
 
         let global_stats_block = Block::default().borders(Borders::ALL).title(Span::styled(
-            "Globals stats:",
+            "Fuzzing statistics:",
             Style::default()
                 .fg(Color::Green)
                 .add_modifier(Modifier::BOLD),

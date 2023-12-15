@@ -201,14 +201,16 @@ impl Fuzzer {
                         }
                         WorkerEvent::NewCrash(inputs, error) => {
                             let crash = Crash::new(&self.target_function, &inputs, &error);
+                            let mut message = format!("{} - already exists, skipping", Parameters(inputs.clone()));
                             if !self.unique_crashes_set.contains(&crash) {
                                 write_crashfile(&self.config.crashes_dir, crash.clone());
                                 self.global_stats.unique_crashes += 1;
                                 self.unique_crashes_set.insert(crash.clone());
+                                message = format!("{} - NEW", Parameters(inputs));
                             }
                             events.push_front(UiEvent::NewCrash(UiEventData {
                                 time: duration,
-                                message: format!("{}", Parameters(inputs)),
+                                message,
                                 error: Some(error),
                             }));
                         }
@@ -251,7 +253,7 @@ impl Fuzzer {
                         }
                     }
                 }
-                if self.global_stats.execs % 10000 == 0 {
+                if self.global_stats.execs % 100000 == 0 {
                     println!("{}s running time | {} execs/s | total execs: {} | crashes: {} | unique crashes: {} | coverage: {}", 
                     self.global_stats.time_running, 
                     self.global_stats.execs_per_sec, 
