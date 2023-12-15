@@ -1,10 +1,13 @@
-use std::{time::SystemTime, fs::File, io::Write};
+use std::{time::SystemTime, fs::{File, self}, io::Write};
 
 use chrono::{DateTime, Utc};
 
 use super::crash::Crash;
 
 pub fn write_crashfile(path: &str, crash: Crash) {
+    if let Err(err) = fs::create_dir_all(path) {
+        panic!("Could not create crashes directory: {}", err);
+    }
     let d = SystemTime::now();
     // Create DateTime from SystemTime
     let datetime = DateTime::<Utc>::from(d);

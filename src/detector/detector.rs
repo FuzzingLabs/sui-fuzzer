@@ -8,7 +8,6 @@ use super::basic_opcode_detector::BasicOpCodeDetector;
 /// Add new detectors here
 #[derive(Debug, Clone, ValueEnum)]
 pub enum AvailableDetector {
-    All,
     BasicOpCodeDetector,
 }
 
@@ -21,7 +20,6 @@ pub trait Detector {
 /// Add new detectors here too
 pub fn new_detector(d: &AvailableDetector) -> Box<dyn Detector> {
     match d {
-        AvailableDetector::All => todo!(),
         AvailableDetector::BasicOpCodeDetector => Box::new(BasicOpCodeDetector::default()),
     }
 }

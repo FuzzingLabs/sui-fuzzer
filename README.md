@@ -42,7 +42,7 @@ To run the fuzzer just use (with rust and cargo installed):
 $ make CONFIG_PATH="./config.json" TARGET_MODULE="fuzzinglabs_module" TARGET_FUNCTION="fuzzinglabs"
 ```
 
-You need to have a compiled SuiMove module path in the *runner_parameter* item in the config.
+You need to have a compiled SuiMove module path in the *contract_file* item in the config.
 
 Here is an example of config:
 

@@ -243,9 +243,22 @@ impl Fuzzer {
                 for event in events.clone().into_iter() {
                     match event {
                         UiEvent::NewCoverage(data) => println!("New coverage: {}", data.message),
-                        UiEvent::NewCrash(data) => println!("New crash: {} {}", data.error.unwrap(), data.message),
-                        UiEvent::DetectorTriggered(data) => println!("Detector triggered: {}", data.message),
+                        UiEvent::NewCrash(data) => {
+                            println!("New crash: {} {}", data.error.unwrap(), data.message)
+                        }
+                        UiEvent::DetectorTriggered(data) => {
+                            println!("Detector triggered: {}", data.message)
+                        }
                     }
+                }
+                if self.global_stats.execs % 10000 == 0 {
+                    println!("{}s running time | {} execs/s | total execs: {} | crashes: {} | unique crashes: {} | coverage: {}", 
+                    self.global_stats.time_running, 
+                    self.global_stats.execs_per_sec, 
+                    self.global_stats.execs, 
+                    self.global_stats.crashes, 
+                    self.global_stats.unique_crashes, 
+                    self.coverage_set.len());
                 }
                 events.clear();
             }
