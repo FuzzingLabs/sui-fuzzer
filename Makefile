@@ -10,3 +10,7 @@ all:
 list_functions:
 	cargo run --release -- --config-path $(CONFIG_PATH) --target-module $(TARGET_MODULE) -l
 
+
+replay:
+	cargo run --release -- --config-path $(CONFIG_PATH) --replay $(CRASHFILE)
+

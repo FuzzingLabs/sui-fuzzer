@@ -131,6 +131,12 @@ impl Fuzzer {
         sum
     }
 
+    fn broadcast(&self, event: &WorkerEvent) {
+        for chan in &self.channels {
+            chan.send(event.to_owned()).unwrap();
+        }
+    }
+
     pub fn run(&mut self) {
         // Init workers
         self.start_threads();
@@ -147,6 +153,8 @@ impl Fuzzer {
                 &self.target_parameters,
             );
         }
+
+        let mut new_crash: Option<Crash> = None;
 
         loop {
             // Sum execs
@@ -200,13 +208,14 @@ impl Fuzzer {
                             }
                         }
                         WorkerEvent::NewCrash(inputs, error) => {
-                            let crash = Crash::new(&self.target_function, &inputs, &error);
+                            let crash = Crash::new(&self.target_module, &self.target_function, &inputs, &error);
                             let mut message = format!("{} - already exists, skipping", Parameters(inputs.clone()));
                             if !self.unique_crashes_set.contains(&crash) {
                                 write_crashfile(&self.config.crashes_dir, crash.clone());
                                 self.global_stats.unique_crashes += 1;
                                 self.unique_crashes_set.insert(crash.clone());
                                 message = format!("{} - NEW", Parameters(inputs));
+                                new_crash = Some(crash);
                             }
                             events.push_front(UiEvent::NewCrash(UiEventData {
                                 time: duration,
@@ -228,6 +237,12 @@ impl Fuzzer {
                         _ => unimplemented!(),
                     }
                 }
+            }
+
+            // Broadcasting unique crash to all threads
+            if let Some(crash) = &new_crash {
+                self.broadcast(&WorkerEvent::NewUniqueCrash(crash.clone()));
+                new_crash = None;
             }
 
             // Run ui

@@ -82,6 +82,7 @@ fn combine_signers_and_args(
 pub struct SuiRunner {
     move_vm: MoveVM,
     module: CompiledModule,
+    target_module: String,
     target_function: String,
     pub target_parameters: Vec<FuzzerType>,
 }
@@ -100,6 +101,7 @@ impl SuiRunner {
         SuiRunner {
             move_vm,
             module,
+            target_module: String::from(target_module),
             target_function: String::from(target_function),
             target_parameters: Self::transform_params(params),
         }
@@ -144,8 +146,17 @@ impl SuiRunner {
 }
 
 impl Runner for SuiRunner {
+
     fn get_target_parameters(&self) -> Vec<FuzzerType> {
         self.target_parameters.clone()
+    }
+
+    fn get_target_module(&self) -> String {
+        self.target_module.clone()
+    }
+
+    fn get_target_function(&self) -> String {
+        self.target_function.clone()
     }
 
     fn execute(&mut self, inputs: Vec<FuzzerType>) -> Result<Option<Coverage>, (Coverage, Error)> {
@@ -176,7 +187,6 @@ impl Runner for SuiRunner {
         match result {
             Ok(_values) => Ok(Some(Self::create_coverage(inputs.clone(), coverage))),
             Err(err) => {
-                eprintln!("{:}", err);
                 let mut message = String::from("");
                 if let Some(m) = err.message() {
                     message = m.to_string();

@@ -7,4 +7,8 @@ pub trait Runner {
     fn execute(&mut self, inputs: Vec<Type>) -> Result<Option<Coverage>, (Coverage, Error)>;
     /// Returns the target parameters
     fn get_target_parameters(&self) -> Vec<Type>;
+    // Returns the name of the targeted module
+    fn get_target_module(&self) -> String;
+    // Returns the name of the targeted function
+    fn get_target_function(&self) -> String;
 }

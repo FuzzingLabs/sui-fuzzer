@@ -5,6 +5,7 @@ use std::time::Instant;
 
 use crate::detector::detector::{new_detector, AvailableDetector, Detector};
 use crate::fuzzer::coverage::Coverage;
+use crate::fuzzer::crash::Crash;
 use crate::fuzzer::error::Error;
 use crate::fuzzer::stats::Stats;
 use crate::mutator::mutator::Mutator;
@@ -12,11 +13,13 @@ use crate::mutator::rng::Rng;
 use crate::mutator::types::Type;
 use crate::runner::runner::Runner;
 
+#[derive(Clone)]
 pub enum WorkerEvent {
     NewCrash(Vec<Type>, Error),
+    NewUniqueCrash(Crash),
     CoverageUpdateRequest(HashSet<Coverage>),
     CoverageUpdateResponse(HashSet<Coverage>),
-    DetectorTriggered(AvailableDetector, Option<String>)
+    DetectorTriggered(AvailableDetector, Option<String>),
 }
 
 pub struct Worker {
@@ -25,6 +28,7 @@ pub struct Worker {
     runner: Box<dyn Runner>,
     mutator: Box<dyn Mutator>,
     coverage_set: HashSet<Coverage>,
+    unique_crashes_set: HashSet<Crash>,
     rng: Rng,
     execs_before_cov_update: u64,
     detectors: Vec<Box<dyn Detector>>,
@@ -50,6 +54,7 @@ impl Worker {
             runner,
             mutator,
             coverage_set: HashSet::new(),
+            unique_crashes_set: HashSet::new(),
             rng: Rng {
                 seed,
                 exp_disabled: false,
@@ -142,9 +147,18 @@ impl Worker {
                     if !self.coverage_set.contains(&coverage) {
                         self.coverage_set.insert(coverage);
                         self.stats.write().unwrap().secs_since_last_cov = 0;
-                        self.channel
-                            .send(WorkerEvent::NewCrash(inputs.clone(), error))
-                            .unwrap();
+                        // Might be wring location for this (maybe outside the if)
+                        let crash = Crash::new(
+                            &self.runner.get_target_module(),
+                            &self.runner.get_target_function(),
+                            &inputs,
+                            &error,
+                        );
+                        if !self.unique_crashes_set.contains(&crash) {
+                            self.channel
+                                .send(WorkerEvent::NewCrash(inputs.clone(), error))
+                                .unwrap();
+                        }
                     }
                     self.stats.write().unwrap().crashes += 1;
                 }
@@ -160,10 +174,16 @@ impl Worker {
                     .unwrap();
             }
 
-            // Check channel form main thread respone
+            // Check channel from main thread response
             if let Ok(response) = self.channel.try_recv() {
-                if let WorkerEvent::CoverageUpdateResponse(coverage_set) = response {
-                    self.coverage_set.extend(coverage_set);
+                match response {
+                    WorkerEvent::CoverageUpdateResponse(coverage_set) => {
+                        self.coverage_set.extend(coverage_set)
+                    }
+                    WorkerEvent::NewUniqueCrash(crash) => {
+                        let _ = self.unique_crashes_set.insert(crash);
+                    }
+                    _ => unreachable!(),
                 }
             }
 
