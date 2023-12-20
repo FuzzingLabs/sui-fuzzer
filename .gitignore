@@ -1,6 +1,7 @@
 target/
 
 crashes/
+corpus/
 
 Cargo.lock
 
