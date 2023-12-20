@@ -19,7 +19,10 @@ use crate::AvailableDetector;
 use crate::mutator::sui_mutator::SuiMutator;
 use crate::runner::sui_runner::SuiRunner;
 
+use super::coverage;
 use super::crash::Crash;
+use super::fuzzer_utils::load_corpus;
+use super::fuzzer_utils::write_corpus_file;
 use super::fuzzer_utils::write_crashfile;
 
 pub struct Fuzzer {
@@ -60,12 +63,13 @@ impl Fuzzer {
         } else {
             None
         };
+        let coverage_set = load_corpus(&config.corpus_dir);
         Fuzzer {
             config,
             threads_stats: vec![],
             channels: vec![],
             global_stats: Stats::new(),
-            coverage_set: HashSet::new(),
+            coverage_set,
             unique_crashes_set: HashSet::new(),
             ui,
             target_module: String::from(target_module),
@@ -96,6 +100,7 @@ impl Fuzzer {
                 let execs_before_cov_update = self.config.execs_before_cov_update;
                 let mutator = Box::new(SuiMutator::new(seed, 12));
                 let detectors = self.detectors.clone();
+                let coverage_set = self.coverage_set.clone();
                 let _ = std::thread::Builder::new()
                     .name(format!("Worker {}", i).to_string())
                     .spawn(move || {
@@ -103,6 +108,7 @@ impl Fuzzer {
                         let mut w = Worker::new(
                             worker,
                             stats,
+                            coverage_set,
                             runner,
                             mutator,
                             seed,
@@ -196,6 +202,7 @@ impl Fuzzer {
                             // Adds all the coverage to the main coverage_set
                             for diff in &differences_with_worker {
                                 if !self.coverage_set.contains(diff) {
+                                    write_corpus_file(&self.config.corpus_dir, &diff);
                                     self.coverage_set.insert(diff.to_owned().clone());
                                     self.global_stats.secs_since_last_cov = 0;
                                     self.global_stats.coverage_size += 1;

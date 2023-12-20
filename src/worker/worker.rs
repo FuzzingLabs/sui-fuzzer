@@ -38,6 +38,7 @@ impl Worker {
     pub fn new(
         channel: Channel<WorkerEvent, WorkerEvent>,
         stats: Arc<RwLock<Stats>>,
+        coverage_set: HashSet<Coverage>,
         runner: Box<dyn Runner>,
         mutator: Box<dyn Mutator>,
         seed: u64,
@@ -53,7 +54,7 @@ impl Worker {
             stats,
             runner,
             mutator,
-            coverage_set: HashSet::new(),
+            coverage_set,
             unique_crashes_set: HashSet::new(),
             rng: Rng {
                 seed,

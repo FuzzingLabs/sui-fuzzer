@@ -1,14 +1,16 @@
 use std::hash::{Hash, Hasher};
 
+use serde::{Serialize, Deserialize};
+
 use crate::mutator::types::Type;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Coverage {
     pub inputs: Vec<Type>,
     pub data: Vec<CoverageData>
 }
 
-#[derive(Hash, Eq, PartialEq, Debug, Clone)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct CoverageData {
     pub pc: u64
 }

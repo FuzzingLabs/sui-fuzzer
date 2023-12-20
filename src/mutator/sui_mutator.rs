@@ -11,8 +11,7 @@ impl SuiMutator {
     pub fn new(seed: u64, max_input_size: usize) -> Self {
         let mutator = basic_mutator::Mutator::new()
             .seed(seed)
-            .max_input_size(max_input_size)
-            .printable(true);
+            .max_input_size(max_input_size);
         SuiMutator { mutator }
     }
 }
