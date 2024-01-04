@@ -19,10 +19,10 @@ use crate::AvailableDetector;
 use crate::mutator::sui_mutator::SuiMutator;
 use crate::runner::sui_runner::SuiRunner;
 
-use super::coverage;
 use super::crash::Crash;
 use super::fuzzer_utils::load_corpus;
-use super::fuzzer_utils::write_corpus_file;
+use super::fuzzer_utils::load_crashes;
+use super::fuzzer_utils::write_corpusfile;
 use super::fuzzer_utils::write_crashfile;
 
 pub struct Fuzzer {
@@ -63,14 +63,15 @@ impl Fuzzer {
         } else {
             None
         };
-        let coverage_set = load_corpus(&config.corpus_dir);
+        let coverage_set = load_corpus(&config.corpus_dir).unwrap_or_default();
+        let unique_crashes_set = load_crashes(&config.crashes_dir).unwrap_or_default();
         Fuzzer {
             config,
             threads_stats: vec![],
             channels: vec![],
             global_stats: Stats::new(),
             coverage_set,
-            unique_crashes_set: HashSet::new(),
+            unique_crashes_set,
             ui,
             target_module: String::from(target_module),
             target_function: String::from(target_function),
@@ -202,7 +203,7 @@ impl Fuzzer {
                             // Adds all the coverage to the main coverage_set
                             for diff in &differences_with_worker {
                                 if !self.coverage_set.contains(diff) {
-                                    write_corpus_file(&self.config.corpus_dir, &diff);
+                                    write_corpusfile(&self.config.corpus_dir, &diff);
                                     self.coverage_set.insert(diff.to_owned().clone());
                                     self.global_stats.secs_since_last_cov = 0;
                                     self.global_stats.coverage_size += 1;

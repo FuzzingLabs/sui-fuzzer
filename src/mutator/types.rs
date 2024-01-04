@@ -36,7 +36,7 @@ impl Display for Type {
                             }
                         })
                         .collect();
-                    write!(f, "Vector(U8, {})", String::from_utf8_lossy(&buffer))
+                    write!(f, "Vector(U8, [{}])", String::from_utf8_lossy(&buffer))
                 }
                 _ => todo!(),
             },

@@ -9,7 +9,7 @@ use chrono::{DateTime, Utc};
 
 use crate::runner::{runner::Runner, sui_runner::SuiRunner};
 
-use super::{config::Config, coverage::{Coverage, self}, crash::Crash};
+use super::{config::Config, coverage::Coverage, crash::Crash};
 
 pub fn write_crashfile(path: &str, crash: Crash) {
     if let Err(err) = fs::create_dir_all(path) {
@@ -29,7 +29,7 @@ pub fn write_crashfile(path: &str, crash: Crash) {
         .unwrap();
 }
 
-pub fn write_corpus_file(path: &str, cov: &Coverage) {
+pub fn write_corpusfile(path: &str, cov: &Coverage) {
     if let Err(err) = fs::create_dir_all(path) {
         panic!("Could not create crashes directory: {}", err);
     }
@@ -57,15 +57,30 @@ pub fn replay(config: &Config, crashfile_path: &str) {
     }
 }
 
-pub fn load_corpus(path: &str) -> HashSet<Coverage> {
+pub fn load_corpus(path: &str) -> Result<HashSet<Coverage>, String> {
     let mut set = HashSet::new();
-    let paths = fs::read_dir(path).expect("Could not read corpus directory !");
-
-    for file in paths {
-        let data = fs::read_to_string(file.unwrap().path().display().to_string())
-            .expect("Could not read crash file !");
-        let coverage = serde_json::from_str(&data).unwrap();
-        set.insert(coverage);
+    if let Ok(paths) = fs::read_dir(path) {
+        for file in paths {
+            let data = fs::read_to_string(file.unwrap().path().display().to_string())
+                .expect("Could not read corpus file !");
+            let coverage = serde_json::from_str(&data).unwrap();
+            set.insert(coverage);
+        }
+        return Ok(set);
     }
-    set
+    Err("Could not read corpus directory !".to_string())
+}
+
+pub fn load_crashes(path: &str) -> Result<HashSet<Crash>, String> {
+    let mut set = HashSet::new();
+    if let Ok(paths) = fs::read_dir(path) {
+        for file in paths {
+            let data = fs::read_to_string(file.unwrap().path().display().to_string())
+                .expect("Could not read crash file !");
+            let crash = serde_json::from_str(&data).unwrap();
+            set.insert(crash);
+        }
+        return Ok(set);
+    }
+    Err("Could not read crash directory !".to_string())
 }

@@ -13,7 +13,7 @@ use std::io::Stdout;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
-use crate::fuzzer::stats::Stats;
+use crate::{fuzzer::stats::Stats, mutator::types::Parameters};
 use crate::ui::utils::create_event_item;
 use crate::{fuzzer::error::Error, mutator::types::Type};
 
@@ -253,7 +253,7 @@ impl Ui {
             text::Line::from(vec![Span::styled("Target: ", Style::new().green())]),
             text::Line::from(format!("{}::{}", target_module, target_function)),
             text::Line::from(vec![Span::styled("Parameters: ", Style::new().green())]),
-            text::Line::from(format!("{:?}", target_parameters)),
+            text::Line::from(format!("{}", Parameters(target_parameters.to_vec()))),
         ];
 
         let global_stats_block = Block::default().borders(Borders::ALL).title(Span::styled(
