@@ -23,9 +23,9 @@ Fuzzer for Sui Move Smart Contracts.
 
 ### Milestone 3: Fuzzer finalization
 - [ ] Generation of sequences of calls (stateful fuzzing)
-- [ ] Improvement of contract argument generation (based on )
+- [x] Improvement of contract argument generation (based on )
 - [ ] Improvement of command line options
-- [ ] Improvement of the fuzzing (input file sharing, mutation algorithm, speed)
+- [x] Improvement of the fuzzing (input file sharing, mutation algorithm, speed)
 - [ ] Create more documentation & tutorials against basic/example contracts
 
 ## Usage
