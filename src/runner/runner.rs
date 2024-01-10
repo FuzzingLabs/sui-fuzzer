@@ -11,4 +11,6 @@ pub trait Runner {
     fn get_target_module(&self) -> String;
     /// Returns the name of the targeted function
     fn get_target_function(&self) -> String;
+    /// Returns the max coverage
+    fn get_max_coverage(&self) -> usize;
 }

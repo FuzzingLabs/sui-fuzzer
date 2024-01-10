@@ -46,6 +46,8 @@ pub struct Fuzzer {
     target_function: String,
     // Parameters of the target function
     target_parameters: Vec<Type>,
+    // Max coverage
+    max_coverage: usize,
     // Activated detectors
     detectors: Option<Vec<AvailableDetector>>,
 }
@@ -59,7 +61,7 @@ impl Fuzzer {
     ) -> Self {
         let nb_threads = config.nb_threads;
         let ui = if config.use_ui {
-            Some(Ui::new(nb_threads))
+            Some(Ui::new(nb_threads, config.seed.unwrap()))
         } else {
             None
         };
@@ -76,6 +78,7 @@ impl Fuzzer {
             target_module: String::from(target_module),
             target_function: String::from(target_function),
             target_parameters: vec![],
+            max_coverage: 0,
             detectors: detectors.cloned(),
         }
     }
@@ -96,6 +99,7 @@ impl Fuzzer {
                     &self.target_function,
                 ));
                 self.target_parameters = runner.get_target_parameters();
+                self.max_coverage = runner.get_max_coverage();
                 // Increment seed so that each worker doesn't do the same thing
                 let seed = self.config.seed.unwrap() + (i as u64);
                 let execs_before_cov_update = self.config.execs_before_cov_update;
@@ -158,10 +162,20 @@ impl Fuzzer {
                 &self.target_module,
                 &self.target_function,
                 &self.target_parameters,
+                self.max_coverage,
             );
         }
 
         let mut new_crash: Option<Crash> = None;
+
+        // Create events for loaded corpus
+        for c in self.coverage_set.iter() {
+            events.push_front(UiEvent::NewCoverage(UiEventData {
+                time: Duration::new(0, 0),
+                message: format!("{} - loaded from corpus directory", Parameters(c.inputs.clone())),
+                error: None,
+            }));
+        }
 
         loop {
             // Sum execs
@@ -257,7 +271,7 @@ impl Fuzzer {
             if self.config.use_ui {
                 if self.ui.as_mut().unwrap().render(
                     &self.global_stats,
-                    &events,
+                    &mut events,
                     &self.threads_stats,
                 ) {
                     self.ui.as_mut().unwrap().restore_terminal();

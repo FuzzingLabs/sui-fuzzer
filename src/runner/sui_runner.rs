@@ -84,6 +84,7 @@ pub struct SuiRunner {
     module: CompiledModule,
     target_module: String,
     target_function: String,
+    max_coverage: usize,
     pub target_parameters: Vec<FuzzerType>,
 }
 
@@ -103,7 +104,8 @@ impl SuiRunner {
             module,
             target_module: String::from(target_module),
             target_function: String::from(target_function),
-            target_parameters: Self::transform_params(params),
+            max_coverage: params.1,
+            target_parameters: Self::transform_params(params.0),
         }
     }
 
@@ -157,6 +159,10 @@ impl Runner for SuiRunner {
 
     fn get_target_function(&self) -> String {
         self.target_function.clone()
+    }
+
+    fn get_max_coverage(&self) -> usize {
+        self.max_coverage
     }
 
     fn execute(&mut self, inputs: Vec<FuzzerType>) -> Result<Option<Coverage>, (Coverage, Error)> {

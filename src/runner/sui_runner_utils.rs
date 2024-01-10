@@ -114,8 +114,13 @@ impl From<Type> for FuzzerType {
     }
 }
 
-pub fn generate_abi_from_source(path: &str, module_name: &str, function_name: &str) -> Vec<Type> {
+pub fn generate_abi_from_source(
+    path: &str,
+    module_name: &str,
+    function_name: &str,
+) -> (Vec<Type>, usize) {
     let params;
+    let max_coverage;
 
     let build_config = BuildConfig {
         skip_fetch_latest_git_deps: true,
@@ -145,6 +150,7 @@ pub fn generate_abi_from_source(path: &str, module_name: &str, function_name: &s
             .get_functions()
             .find(|f| f.get_name_str() == function_name);
         if let Some(f) = func {
+            max_coverage = f.get_bytecode().len();
             params = f.get_parameters().iter().map(|p| p.1.clone()).collect();
         } else {
             panic!("Could not find target function !");
@@ -152,15 +158,16 @@ pub fn generate_abi_from_source(path: &str, module_name: &str, function_name: &s
     } else {
         panic!("Could not find target module !");
     }
-    params
+    (params, max_coverage)
 }
 
 pub fn generate_abi_from_bin(
     module: &CompiledModule,
     module_name: &str,
     function_name: &str,
-) -> Vec<Type> {
+) -> (Vec<Type>, usize) {
     let params;
+    let max_coverage;
 
     let modules = [module.clone()];
     let module_map = Modules::new(modules.iter());
@@ -177,6 +184,7 @@ pub fn generate_abi_from_bin(
             .get_functions()
             .find(|f| f.get_name_str() == function_name);
         if let Some(f) = func {
+            max_coverage = f.get_bytecode().len();
             params = f.get_parameter_types();
         } else {
             panic!("Could not find target function !");
@@ -184,7 +192,7 @@ pub fn generate_abi_from_bin(
     } else {
         panic!("Could not find target module !");
     }
-    params
+    (params, max_coverage)
 }
 
 pub fn load_compiled_module(path: &str) -> CompiledModule {

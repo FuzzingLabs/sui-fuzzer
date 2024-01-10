@@ -1,2 +1,10 @@
 pub mod ui;
 pub mod utils;
+pub mod widget;
+pub mod events_widget;
+pub mod graphs_widget;
+pub mod stats_widget;
+pub mod worker_stats_widget;
+pub mod global_stats_widget;
+pub mod target_infos_widget;
+pub mod detectors_widget;

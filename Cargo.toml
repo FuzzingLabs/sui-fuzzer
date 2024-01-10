@@ -5,6 +5,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[target.'cfg(target_os = "linux")'.dependencies]
+memory-stats = "1.1.0"
+
 [dependencies]
 bichannel = "0.0.4"
 clap = { version = "4.4.4", features = ["derive"] }
@@ -15,7 +18,6 @@ basic_mutator = { git = "https://github.com/gamozolabs/basic_mutator" }
 strum = { version = "0.25", features = ["derive"] }
 crossterm = "0.27.0"
 time = "0.3.29"
-memory-stats = "1.1.0"
 chrono = "0.4.31"
 itertools = "0.12.0"
 
