@@ -12,7 +12,7 @@ use std::io::Stdout;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
-use crate::fuzzer::stats::Stats;
+use crate::{detector::detector::AvailableDetector, fuzzer::stats::Stats};
 use crate::{fuzzer::error::Error, mutator::types::Type};
 
 use super::{events_widget::EventsWidget, stats_widget::StatsWidget};
@@ -97,6 +97,7 @@ impl Ui {
         stats: &Stats,
         mut events: &mut VecDeque<UiEvent>,
         threads_stats: &Vec<Arc<RwLock<Stats>>>,
+        detectors: &Option<Vec<AvailableDetector>>,
     ) -> bool {
         self.terminal
             .draw(|frame| {
@@ -123,6 +124,7 @@ impl Ui {
                         self.tab_index,
                         self.threads_stats_idx,
                         threads_stats,
+                        detectors,
                     );
                 }
                 frame.render_widget(stats_block, chunks[0]);

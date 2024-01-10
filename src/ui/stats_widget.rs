@@ -2,7 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use ratatui::prelude::*;
 
-use crate::{fuzzer::stats::Stats, mutator::types::Type};
+use crate::{detector::detector::AvailableDetector, fuzzer::stats::Stats, mutator::types::Type};
 
 use super::{
     detectors_widget::DetectorWidget, global_stats_widget::GlobalStatsWidget,
@@ -47,6 +47,7 @@ impl StatsWidget {
         tab_index: usize,
         threads_stats_idx: usize,
         threads_stats: &Vec<Arc<RwLock<Stats>>>,
+        detectors: &Option<Vec<AvailableDetector>>,
     ) where
         B: Backend,
     {
@@ -88,7 +89,7 @@ impl StatsWidget {
 
         // Render detectors widget
         self.detectors_widget
-            .render(frame, rects_global_stats_detector[1]);
+            .render(frame, rects_global_stats_detector[1], detectors);
 
         // Render graph widget
         self.graphs_widget

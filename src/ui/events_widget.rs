@@ -26,7 +26,7 @@ impl EventsWidget {
     {
         if events.len() != 0 {
             let len = events.len() as u16;
-            *scroll += 1;
+            *scroll += len / 2;
             self.events.append(events);
         }
 

@@ -12,7 +12,6 @@ pub enum AvailableDetector {
 }
 
 pub trait Detector {
-
     fn get_type(&self) -> AvailableDetector;
     fn detect(&self, coverage: &Coverage, error: Option<Error>) -> (bool, Option<String>);
 }

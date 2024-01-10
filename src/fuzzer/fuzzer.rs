@@ -273,6 +273,8 @@ impl Fuzzer {
                     &self.global_stats,
                     &mut events,
                     &self.threads_stats,
+                    &self.detectors
+                    
                 ) {
                     self.ui.as_mut().unwrap().restore_terminal();
                     eprintln!("Quitting...");
