@@ -13,6 +13,8 @@ mod runner;
 mod ui;
 mod worker;
 
+/// The *default* behavior of the fuzzer is to run in stateless mode
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -36,8 +38,13 @@ struct Args {
     #[arg(short, long)]
     list_functions: bool,
 
+    /// Replay the given crash
     #[arg(short, long)]
     replay: Option<String>,
+
+    /// Functions to fuzz statefully
+    #[arg(short, long)]
+    functions: Option<Vec<String>>,
 }
 
 fn main() {
@@ -66,13 +73,16 @@ fn main() {
     } else if args.config_path != "" {
         if let Some(target_module) = args.target_module {
             if let Some(target_function) = args.target_function {
-                let mut fuzzer = Fuzzer::new(
-                    config,
-                    &target_module,
-                    &target_function,
-                    args.detectors.as_ref(),
-                );
-                fuzzer.run();
+                if let Some(_functions) = args.functions {
+                } else {
+                    let mut fuzzer = Fuzzer::new(
+                        config,
+                        &target_module,
+                        &target_function,
+                        args.detectors.as_ref(),
+                    );
+                    fuzzer.run();
+                }
             }
         } else {
             if let Some(crashfile_path) = args.replay {

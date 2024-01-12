@@ -13,11 +13,13 @@ use crate::mutator::types::Parameters;
 use crate::mutator::types::Type;
 use crate::runner::runner::Runner;
 use crate::ui::ui::{Ui, UiEvent, UiEventData};
-use crate::worker::worker::{Worker, WorkerEvent};
 use crate::AvailableDetector;
 // Sui specific imports
 use crate::mutator::sui_mutator::SuiMutator;
 use crate::runner::sui_runner::SuiRunner;
+use crate::worker::worker::Worker;
+use crate::worker::worker::WorkerEvent;
+use crate::worker::stateless_worker::StatelessWorker;
 
 use super::crash::Crash;
 use super::fuzzer_utils::load_corpus;
@@ -110,7 +112,7 @@ impl Fuzzer {
                     .name(format!("Worker {}", i).to_string())
                     .spawn(move || {
                         // Creates generic worker and starts it
-                        let mut w = Worker::new(
+                        let mut w = Box::new(StatelessWorker::new(
                             worker,
                             stats,
                             coverage_set,
@@ -119,7 +121,7 @@ impl Fuzzer {
                             seed,
                             execs_before_cov_update,
                             detectors,
-                        );
+                        ));
                         w.run();
                     });
             }
