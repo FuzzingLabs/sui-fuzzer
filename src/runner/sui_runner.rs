@@ -14,6 +14,7 @@ use move_core_types::vm_status::StatusCode;
 use move_model::ty::Type;
 use move_vm_runtime::move_vm::MoveVM;
 use move_vm_types::gas::UnmeteredGasMeter;
+use sui_types::in_memory_storage::InMemoryStorage;
 use std::collections::HashMap;
 
 use crate::fuzzer::coverage::{Coverage, CoverageData};
@@ -81,6 +82,7 @@ fn combine_signers_and_args(
 
 pub struct SuiRunner {
     move_vm: MoveVM,
+    storage: InMemoryStorage,
     module: CompiledModule,
     target_module: String,
     target_function: String,
@@ -101,6 +103,7 @@ impl SuiRunner {
         };
         SuiRunner {
             move_vm,
+            storage: InMemoryStorage::new(vec![]),
             module,
             target_module: String::from(target_module),
             target_function: String::from(target_function),

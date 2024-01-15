@@ -30,5 +30,6 @@ move-binary-format = { path = "./sui/external-crates/move/crates/move-binary-for
 move-bytecode-utils = { path = "./sui/external-crates/move/crates/move-bytecode-utils" }
 move-model = { path = "./sui/external-crates/move/crates/move-model" }
 move-core-types = { path = "./sui/external-crates/move/crates/move-core-types" }
-shared-crypto = { path = "./sui/crates/shared-crypto"}
-sui-keys = { path = "./sui/crates/sui-keys"}
+shared-crypto = { path = "./sui/crates/shared-crypto" }
+sui-keys = { path = "./sui/crates/sui-keys" }
+sui-types = { path = "./sui/crates/sui-types" }

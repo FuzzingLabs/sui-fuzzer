@@ -49,6 +49,7 @@ pub struct Ui {
 
 impl Ui {
     pub fn new(nb_threads: u8, seed: u64) -> Self {
+        Self::initialize_panic_handler();
         let terminal = Self::setup_terminal();
 
         Ui {
@@ -74,6 +75,15 @@ impl Ui {
         disable_raw_mode().unwrap();
         execute!(self.terminal.backend_mut(), LeaveAlternateScreen).unwrap();
         self.terminal.show_cursor().unwrap();
+    }
+
+    pub fn initialize_panic_handler() {
+        let original_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |panic_info| {
+            crossterm::execute!(std::io::stderr(), crossterm::terminal::LeaveAlternateScreen).unwrap();
+            crossterm::terminal::disable_raw_mode().unwrap();
+            original_hook(panic_info);
+        }));
     }
 
     pub fn set_target_infos(
