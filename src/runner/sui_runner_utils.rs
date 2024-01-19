@@ -7,7 +7,6 @@ use move_binary_format::file_format::{FunctionDefinitionIndex, StructDefinitionI
 use move_binary_format::CompiledModule;
 use move_model::addr_to_big_uint;
 use move_model::ast::ModuleName;
-use move_model::ast::Spec;
 use move_model::model::FunId;
 use move_model::model::FunctionData;
 use move_model::model::GlobalEnv;
@@ -58,8 +57,7 @@ pub fn add_modules_to_model<'a>(
                 def_idx,
                 symbol,
                 Loc::default(),
-                Vec::default(),
-                Spec::default(),
+                Vec::default()
             );
             module_data.struct_data.insert(struct_id, data);
             module_data.struct_idx_to_id.insert(def_idx, struct_id);

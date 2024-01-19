@@ -8,14 +8,16 @@ use move_core_types::language_storage::StructTag;
 use move_core_types::resolver::LinkageResolver;
 use move_core_types::resolver::ModuleResolver;
 use move_core_types::resolver::ResourceResolver;
-use move_core_types::value::serialize_values;
-use move_core_types::value::MoveValue;
+use move_core_types::runtime_value::MoveValue;
+use move_core_types::runtime_value::serialize_values;
 use move_core_types::vm_status::StatusCode;
 use move_model::ty::Type;
+use move_vm_config::runtime::VMConfig;
 use move_vm_runtime::move_vm::MoveVM;
 use move_vm_types::gas::UnmeteredGasMeter;
-use sui_types::in_memory_storage::InMemoryStorage;
+use sui_move_natives_v0::all_natives;
 use std::collections::HashMap;
+use sui_types::in_memory_storage::InMemoryStorage;
 
 use crate::fuzzer::coverage::{Coverage, CoverageData};
 use crate::fuzzer::error::Error;
@@ -92,7 +94,12 @@ pub struct SuiRunner {
 
 impl SuiRunner {
     pub fn new(module_path: &str, target_module: &str, target_function: &str) -> Self {
-        let move_vm = MoveVM::new(vec![]).unwrap();
+        let move_vm = MoveVM::new_with_config(
+            all_natives(true),
+            VMConfig::default()
+        
+        )
+        .unwrap();
         // Loading compiled module
         let module = load_compiled_module(module_path);
         let with_source = false;
@@ -151,7 +158,6 @@ impl SuiRunner {
 }
 
 impl Runner for SuiRunner {
-
     fn get_target_parameters(&self) -> Vec<FuzzerType> {
         self.target_parameters.clone()
     }

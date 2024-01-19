@@ -49,6 +49,7 @@ pub struct Ui {
 
 impl Ui {
     pub fn new(nb_threads: u8, seed: u64) -> Self {
+        // Setup panic hook
         Self::initialize_panic_handler();
         let terminal = Self::setup_terminal();
 
