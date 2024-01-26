@@ -10,7 +10,7 @@ pub struct Config {
     // Rng seed
     pub seed: Option<u64>,
     // Initialization parameter of the runner (can be anything since it a string (json, base64, ...))
-    pub contract_file: Option<String>,
+    pub contract: Option<String>,
     // How many execs before coverage update
     pub execs_before_cov_update: u64,
     // Where to put the corpus
@@ -28,7 +28,7 @@ impl Config {
             use_ui: true,
             nb_threads: 8,
             seed: Some(4284),
-            contract_file: None,
+            contract: None,
             execs_before_cov_update: 10_000,
             corpus_dir: "./corpus".to_string(),
             crashes_dir: "./crashes".to_string(),

@@ -4,7 +4,7 @@ use fuzzer::fuzzer_utils::replay;
 
 use crate::fuzzer::config::Config;
 use crate::fuzzer::fuzzer::Fuzzer;
-use crate::runner::sui_runner_utils::get_fuzz_functions_from_bin;
+use crate::runner::stateless_runner::sui_runner_utils::get_fuzz_functions_from_bin;
 
 mod detector;
 mod fuzzer;
@@ -52,7 +52,7 @@ fn main() {
     let config = Config::load_config(&args.config_path);
     if args.list_functions {
         if let Some(target_module) = args.target_module {
-            if let Some(contract_file) = config.contract_file {
+            if let Some(contract_file) = config.contract {
                 println!(
                     "Available functions starting with \"{}\":",
                     config.fuzz_functions_prefix
@@ -74,12 +74,23 @@ fn main() {
         if let Some(target_module) = args.target_module {
             if let Some(target_function) = args.target_function {
                 if let Some(_functions) = args.functions {
-                } else {
+                    // Stateful
                     let mut fuzzer = Fuzzer::new(
                         config,
                         &target_module,
                         &target_function,
                         args.detectors.as_ref(),
+                        true
+                    );
+                    fuzzer.run();
+                } else {
+                    // Stateless
+                    let mut fuzzer = Fuzzer::new(
+                        config,
+                        &target_module,
+                        &target_function,
+                        args.detectors.as_ref(),
+                        false
                     );
                     fuzzer.run();
                 }

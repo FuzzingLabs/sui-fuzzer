@@ -12,11 +12,13 @@ use crate::fuzzer::stats::Stats;
 use crate::mutator::types::Parameters;
 use crate::mutator::types::Type;
 use crate::runner::runner::Runner;
+use crate::runner::stateless_runner::sui_runner::SuiRunner as StatelessSuiRunner;
+use crate::runner::stateful_runner::sui_runner::SuiRunner as StatefulSuiRunner;
 use crate::ui::ui::{Ui, UiEvent, UiEventData};
+use crate::worker::stateful_worker::StatefulWorker;
 use crate::AvailableDetector;
 // Sui specific imports
 use crate::mutator::sui_mutator::SuiMutator;
-use crate::runner::sui_runner::SuiRunner;
 use crate::worker::worker::Worker;
 use crate::worker::worker::WorkerEvent;
 use crate::worker::stateless_worker::StatelessWorker;
@@ -52,6 +54,8 @@ pub struct Fuzzer {
     max_coverage: usize,
     // Activated detectors
     detectors: Option<Vec<AvailableDetector>>,
+    // Whether the fuzzer should use stateful fuzzing or not
+    use_state: bool,
 }
 
 impl Fuzzer {
@@ -60,6 +64,7 @@ impl Fuzzer {
         target_module: &str,
         target_function: &str,
         detectors: Option<&Vec<AvailableDetector>>,
+        use_state: bool,
     ) -> Self {
         let nb_threads = config.nb_threads;
         let ui = if config.use_ui {
@@ -82,10 +87,11 @@ impl Fuzzer {
             target_parameters: vec![],
             max_coverage: 0,
             detectors: detectors.cloned(),
+            use_state,
         }
     }
 
-    fn start_threads(&mut self) {
+    fn start_stateless_threads(&mut self) {
         for i in 0..self.config.nb_threads {
             // Creates the communication channel for the fuzzer and worker sides
             let (fuzzer, worker) = bichannel::channel::<WorkerEvent, WorkerEvent>();
@@ -93,13 +99,13 @@ impl Fuzzer {
             let stats = Arc::new(RwLock::new(Stats::new()));
             self.threads_stats.push(stats.clone());
             // Change here the runner you want to create
-            if let Some(parameter) = &self.config.contract_file {
+            if let Some(parameter) = &self.config.contract {
                 // Creates the sui runner with the runner parameter found in the config
-                let runner = Box::new(SuiRunner::new(
-                    &parameter.clone(),
-                    &self.target_module,
-                    &self.target_function,
-                ));
+                let runner = Box::new(StatelessSuiRunner::new(
+                        &parameter.clone(),
+                        &self.target_module,
+                        &self.target_function,
+                    ));
                 self.target_parameters = runner.get_target_parameters();
                 self.max_coverage = runner.get_max_coverage();
                 // Increment seed so that each worker doesn't do the same thing
@@ -113,15 +119,58 @@ impl Fuzzer {
                     .spawn(move || {
                         // Creates generic worker and starts it
                         let mut w = Box::new(StatelessWorker::new(
-                            worker,
-                            stats,
-                            coverage_set,
-                            runner,
-                            mutator,
-                            seed,
-                            execs_before_cov_update,
-                            detectors,
-                        ));
+                                worker,
+                                stats,
+                                coverage_set,
+                                runner,
+                                mutator,
+                                seed,
+                                execs_before_cov_update,
+                                detectors,
+                            ));
+                        w.run();
+                    });
+            }
+        }
+    }
+
+    fn start_stateful_threads(&mut self) {
+        for i in 0..self.config.nb_threads {
+            // Creates the communication channel for the fuzzer and worker sides
+            let (fuzzer, worker) = bichannel::channel::<WorkerEvent, WorkerEvent>();
+            self.channels.push(fuzzer);
+            let stats = Arc::new(RwLock::new(Stats::new()));
+            self.threads_stats.push(stats.clone());
+            // Change here the runner you want to create
+            if let Some(parameter) = &self.config.contract {
+                // Creates the sui runner with the runner parameter found in the config
+                let runner = Box::new(StatefulSuiRunner::new(
+                        &parameter.clone(),
+                        &self.target_module,
+                        &self.target_function,
+                    ));
+                self.target_parameters = runner.get_target_parameters();
+                self.max_coverage = runner.get_max_coverage();
+                // Increment seed so that each worker doesn't do the same thing
+                let seed = self.config.seed.unwrap() + (i as u64);
+                let execs_before_cov_update = self.config.execs_before_cov_update;
+                let mutator = Box::new(SuiMutator::new(seed, 12));
+                let detectors = self.detectors.clone();
+                let coverage_set = self.coverage_set.clone();
+                let _ = std::thread::Builder::new()
+                    .name(format!("Worker {}", i).to_string())
+                    .spawn(move || {
+                        // Creates generic worker and starts it
+                        let mut w = Box::new(StatefulWorker::new(
+                                worker,
+                                stats,
+                                coverage_set,
+                                runner,
+                                mutator,
+                                seed,
+                                execs_before_cov_update,
+                                detectors,
+                            ));
                         w.run();
                     });
             }
@@ -152,7 +201,11 @@ impl Fuzzer {
 
     pub fn run(&mut self) {
         // Init workers
-        self.start_threads();
+        if self.use_state {
+            self.start_stateful_threads();
+        } else {
+            self.start_stateless_threads();
+        }
 
         // Utils for execs per sec
         let mut execs_per_sec_timer = Instant::now();

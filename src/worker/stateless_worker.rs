@@ -13,8 +13,8 @@ use crate::mutator::rng::Rng;
 use crate::mutator::types::Type;
 use crate::runner::runner::Runner;
 
-use crate::worker::worker::WorkerEvent;
 use super::worker::Worker;
+use crate::worker::worker::WorkerEvent;
 
 pub struct StatelessWorker {
     channel: Channel<WorkerEvent, WorkerEvent>,
@@ -139,22 +139,24 @@ impl Worker for StatelessWorker {
                     }
                 }
                 Err((coverage, error)) => {
-                    // Execute all activated detectors
-                    self.execute_detectors(&coverage, Some(&error));
-                    if !self.coverage_set.contains(&coverage) {
-                        self.coverage_set.insert(coverage);
-                        self.stats.write().unwrap().secs_since_last_cov = 0;
-                        // Might be wring location for this (maybe outside the if)
-                        let crash = Crash::new(
-                            &self.runner.get_target_module(),
-                            &self.runner.get_target_function(),
-                            &inputs,
-                            &error,
-                        );
-                        if !self.unique_crashes_set.contains(&crash) {
-                            self.channel
-                                .send(WorkerEvent::NewCrash(inputs.clone(), error))
-                                .unwrap();
+                    if let Some(coverage) = coverage {
+                        // Execute all activated detectors
+                        self.execute_detectors(&coverage, Some(&error));
+                        if !self.coverage_set.contains(&coverage) {
+                            self.coverage_set.insert(coverage);
+                            self.stats.write().unwrap().secs_since_last_cov = 0;
+                            // Might be wring location for this (maybe outside the if)
+                            let crash = Crash::new(
+                                &self.runner.get_target_module(),
+                                &self.runner.get_target_function(),
+                                &inputs,
+                                &error,
+                            );
+                            if !self.unique_crashes_set.contains(&crash) {
+                                self.channel
+                                    .send(WorkerEvent::NewCrash(inputs.clone(), error))
+                                    .unwrap();
+                            }
                         }
                     }
                     self.stats.write().unwrap().crashes += 1;

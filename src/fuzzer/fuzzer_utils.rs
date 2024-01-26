@@ -7,7 +7,7 @@ use std::{
 
 use chrono::{DateTime, Utc};
 
-use crate::runner::{runner::Runner, sui_runner::SuiRunner};
+use crate::runner::{runner::Runner, stateless_runner::sui_runner::SuiRunner};
 
 use super::{config::Config, coverage::Coverage, crash::Crash};
 
@@ -47,7 +47,7 @@ pub fn replay(config: &Config, crashfile_path: &str) {
     let data = fs::read_to_string(crashfile_path).expect("Could not read crash file !");
     let crash: Crash = serde_json::from_str(&data).expect("Could not load crash file !");
 
-    if let Some(contract_file) = &config.contract_file {
+    if let Some(contract_file) = &config.contract {
         let mut runner =
             SuiRunner::new(&contract_file, &crash.target_module, &crash.target_function);
         match runner.execute(crash.inputs) {

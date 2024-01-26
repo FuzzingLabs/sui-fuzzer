@@ -6,3 +6,5 @@ corpus/
 Cargo.lock
 
 log
+
+sui*

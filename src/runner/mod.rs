@@ -1,3 +1,3 @@
 pub mod runner;
-pub mod sui_runner;
-pub mod sui_runner_utils;
+pub mod stateless_runner;
+pub mod stateful_runner;

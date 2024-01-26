@@ -15,6 +15,6 @@ pub enum WorkerEvent {
     DetectorTriggered(AvailableDetector, Option<String>),
 }
 
-pub trait Worker {
+pub trait Worker{
     fn run(&mut self);
 }

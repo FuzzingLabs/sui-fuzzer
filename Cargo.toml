@@ -26,7 +26,7 @@ sui-move-build = { path = "./sui/crates/sui-move-build"}
 move-package = { path = "./sui/external-crates/move/crates/move-package"}
 move-vm-runtime = { path = "./sui/external-crates/move/move-execution/v0/move-vm/runtime", package = "move-vm-runtime-v0"}
 move-vm-config = { path = "./sui/external-crates/move/crates/move-vm-config"}
-sui-move-natives-v0 = { path = "./sui/sui-execution/v0/sui-move-natives" }
+sui-move-natives-latest = { path = "./sui/sui-execution/latest/sui-move-natives" }
 move-vm-types = { path = "./sui/external-crates/move/crates/move-vm-types" }
 move-binary-format = { path = "./sui/external-crates/move/crates/move-binary-format" }
 move-bytecode-utils = { path = "./sui/external-crates/move/crates/move-bytecode-utils" }
@@ -35,3 +35,8 @@ move-core-types = { path = "./sui/external-crates/move/crates/move-core-types" }
 shared-crypto = { path = "./sui/crates/shared-crypto" }
 sui-keys = { path = "./sui/crates/sui-keys" }
 sui-types = { path = "./sui/crates/sui-types" }
+sui-sdk = { path = "./sui/crates/sui-sdk" }
+sui-json = { path = "./sui/crates/sui-json" }
+futures = "0.3.30"
+tokio = { version = "1.2", features = ["full"] }
+tokio-core = "0.1.18"
