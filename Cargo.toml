@@ -37,6 +37,12 @@ sui-keys = { path = "./sui/crates/sui-keys" }
 sui-types = { path = "./sui/crates/sui-types" }
 sui-sdk = { path = "./sui/crates/sui-sdk" }
 sui-json = { path = "./sui/crates/sui-json" }
+sui-json-rpc = { path = "./sui/crates/sui-json-rpc" }
+transaction-fuzzer = { path = "./sui/crates/transaction-fuzzer" }
+sui-core = { path = "./sui/crates/sui-core", features = ["test-utils"] }
+sui-transaction-builder = { path = "./sui/crates/sui-transaction-builder" }
 futures = "0.3.30"
 tokio = { version = "1.2", features = ["full"] }
 tokio-core = "0.1.18"
+enum-as-inner = "0.6.0"
+rand = "0.8.5"

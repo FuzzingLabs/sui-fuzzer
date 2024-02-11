@@ -5,14 +5,14 @@ compiled_package_info:
     hero: "0000000000000000000000000000000000000000000000000000000000000000"
     std: "0000000000000000000000000000000000000000000000000000000000000001"
     sui: "0000000000000000000000000000000000000000000000000000000000000002"
-  source_digest: B6C14ADBBA612C1396C787E27D4A36FE0D8DB34B5B464EC978EFF0916E635487
+  source_digest: 148371D4921C314D6C470EC3EEB255A7D47529395D3AC42F017E9DE7A0B8BB0C
   build_flags:
-    dev_mode: true
-    test_mode: true
+    dev_mode: false
+    test_mode: false
     generate_docs: false
     install_dir: ~
     force_recompilation: false
-    lock_file: ~
+    lock_file: "./Move.lock"
     fetch_deps_only: false
     skip_fetch_latest_git_deps: false
     default_flavor: sui

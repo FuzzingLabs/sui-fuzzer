@@ -87,6 +87,9 @@ impl StatelessWorker {
                 Type::U128(_) => Type::U128(0),
                 Type::Bool(_) => Type::Bool(true),
                 Type::Vector(t, vec) => Type::Vector(t, Self::init_inputs(vec)),
+                Type::Struct(_) => todo!(),
+                Type::Reference(b, t) => Type::Reference(b, t),
+                Type::Function(_, _, _) => unimplemented!(),
             })
         }
         res
@@ -145,16 +148,20 @@ impl Worker for StatelessWorker {
                         if !self.coverage_set.contains(&coverage) {
                             self.coverage_set.insert(coverage);
                             self.stats.write().unwrap().secs_since_last_cov = 0;
-                            // Might be wring location for this (maybe outside the if)
+                            // Might be wrong location for this (maybe outside the if)
                             let crash = Crash::new(
                                 &self.runner.get_target_module(),
-                                &self.runner.get_target_function(),
+                                &self.runner.get_target_function().as_function().unwrap().0,
                                 &inputs,
                                 &error,
                             );
                             if !self.unique_crashes_set.contains(&crash) {
                                 self.channel
-                                    .send(WorkerEvent::NewCrash(inputs.clone(), error))
+                                    .send(WorkerEvent::NewCrash(
+                                        self.runner.get_target_function().as_function().unwrap().0.to_string(),
+                                        inputs.clone(),
+                                        error,
+                                    ))
                                     .unwrap();
                             }
                         }

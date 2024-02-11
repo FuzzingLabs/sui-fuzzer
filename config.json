@@ -1,9 +1,9 @@
 {
   "use_ui": true,
-  "nb_threads": 8,
+  "nb_threads": 1,
   "seed": 4242,
   "contract_b": "/examples/fuzzinglabs_package/build/fuzzinglabs_package/bytecode_modules/fuzzinglabs_module.mv",
-  "contract": "{ \"local_net_address\": \"http://127.0.0.1:9000\", \"package_id\": \"0xe0f4cea0bbb5695a82b26d43c0cd39179cc0736d9f628d364044f07f658e94fc\", \"keystore_path\": \"./sui.keystore\" }",
+  "contract": "{ \"local_net_address\": \"http://127.0.0.1:9000\", \"package_id\": \"0xda1c2b6897e5e6df48665d719757da87d628b2fca4716c497799c8d132151653\", \"keystore_path\": \"./sui.keystore\" }",
   "contract_a": "./examples/hero/build/hero/bytecode_modules/example.mv",
   "execs_before_cov_update": 10000,
   "corpus_dir": "./corpus",

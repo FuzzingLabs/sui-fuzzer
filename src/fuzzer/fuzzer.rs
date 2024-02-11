@@ -1,6 +1,8 @@
 use bichannel::Channel;
+use sui_move_build::BuildConfig;
 use std::collections::HashSet;
 use std::collections::VecDeque;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::time::Instant;
@@ -12,8 +14,6 @@ use crate::fuzzer::stats::Stats;
 use crate::mutator::types::Parameters;
 use crate::mutator::types::Type;
 use crate::runner::runner::Runner;
-use crate::runner::stateless_runner::sui_runner::SuiRunner as StatelessSuiRunner;
-use crate::runner::stateful_runner::sui_runner::SuiRunner as StatefulSuiRunner;
 use crate::ui::ui::{Ui, UiEvent, UiEventData};
 use crate::worker::stateful_worker::StatefulWorker;
 use crate::AvailableDetector;
@@ -22,6 +22,8 @@ use crate::mutator::sui_mutator::SuiMutator;
 use crate::worker::worker::Worker;
 use crate::worker::worker::WorkerEvent;
 use crate::worker::stateless_worker::StatelessWorker;
+use crate::runner::stateless_runner::sui_runner::SuiRunner as StatelessSuiRunner;
+use crate::runner::stateful_runner::sui_runner::SuiRunner as StatefulSuiRunner;
 
 use super::crash::Crash;
 use super::fuzzer_utils::load_corpus;
@@ -46,8 +48,10 @@ pub struct Fuzzer {
     ui: Option<Ui>,
     // The function to target in the contract
     target_module: String,
-    // The function to target in the contract
-    target_function: String,
+    // The function to target in the contract (stateless)
+    target_function: Option<String>,
+    // The functions to target in the contract (stateful)
+    target_functions: Option<Vec<String>>,
     // Parameters of the target function
     target_parameters: Vec<Type>,
     // Max coverage
@@ -59,12 +63,11 @@ pub struct Fuzzer {
 }
 
 impl Fuzzer {
-    pub fn new(
+    pub fn new_stateless(
         config: Config,
         target_module: &str,
         target_function: &str,
         detectors: Option<&Vec<AvailableDetector>>,
-        use_state: bool,
     ) -> Self {
         let nb_threads = config.nb_threads;
         let ui = if config.use_ui {
@@ -83,11 +86,44 @@ impl Fuzzer {
             unique_crashes_set,
             ui,
             target_module: String::from(target_module),
-            target_function: String::from(target_function),
+            target_function: Some(String::from(target_function)),
+            target_functions:None,
             target_parameters: vec![],
             max_coverage: 0,
             detectors: detectors.cloned(),
-            use_state,
+            use_state: false,
+        }
+    }
+
+    pub fn new_stateful(
+        config: Config,
+        target_module: &str,
+        target_functions: &Vec<String>,
+        detectors: Option<&Vec<AvailableDetector>>,
+    ) -> Self {
+        let nb_threads = config.nb_threads;
+        let ui = if config.use_ui {
+            Some(Ui::new(nb_threads, config.seed.unwrap()))
+        } else {
+            None
+        };
+        let coverage_set = load_corpus(&config.corpus_dir).unwrap_or_default();
+        let unique_crashes_set = load_crashes(&config.crashes_dir).unwrap_or_default();
+        Fuzzer {
+            config,
+            threads_stats: vec![],
+            channels: vec![],
+            global_stats: Stats::new(),
+            coverage_set,
+            unique_crashes_set,
+            ui,
+            target_module: String::from(target_module),
+            target_function: None,
+            target_functions: Some(target_functions.clone()),
+            target_parameters: vec![],
+            max_coverage: 0,
+            detectors: detectors.cloned(),
+            use_state: true,
         }
     }
 
@@ -104,7 +140,7 @@ impl Fuzzer {
                 let runner = Box::new(StatelessSuiRunner::new(
                         &parameter.clone(),
                         &self.target_module,
-                        &self.target_function,
+                        &self.target_function.clone().unwrap(),
                     ));
                 self.target_parameters = runner.get_target_parameters();
                 self.max_coverage = runner.get_max_coverage();
@@ -134,7 +170,22 @@ impl Fuzzer {
         }
     }
 
+    fn build_test_modules(test_dir: &str) -> (Vec<u8>, Vec<Vec<u8>>) {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.extend(["data", test_dir]);
+        let with_unpublished_deps = false;
+        let config = BuildConfig::new_for_testing();
+        let package = config.build(path).unwrap();
+        (
+            package.get_package_digest(with_unpublished_deps).to_vec(),
+            package.get_package_bytes(with_unpublished_deps),
+        )
+    }
+
     fn start_stateful_threads(&mut self) {
+
+        let (_, modules) = Self::build_test_modules("/home/tanguy/Documents/sui/fuzzer/examples/calculator_package");
+
         for i in 0..self.config.nb_threads {
             // Creates the communication channel for the fuzzer and worker sides
             let (fuzzer, worker) = bichannel::channel::<WorkerEvent, WorkerEvent>();
@@ -147,9 +198,8 @@ impl Fuzzer {
                 let runner = Box::new(StatefulSuiRunner::new(
                         &parameter.clone(),
                         &self.target_module,
-                        &self.target_function,
+                        modules.clone()
                     ));
-                self.target_parameters = runner.get_target_parameters();
                 self.max_coverage = runner.get_max_coverage();
                 // Increment seed so that each worker doesn't do the same thing
                 let seed = self.config.seed.unwrap() + (i as u64);
@@ -157,6 +207,8 @@ impl Fuzzer {
                 let mutator = Box::new(SuiMutator::new(seed, 12));
                 let detectors = self.detectors.clone();
                 let coverage_set = self.coverage_set.clone();
+                let target_module = self.target_module.clone();
+                let target_functions = self.target_functions.clone().unwrap();
                 let _ = std::thread::Builder::new()
                     .name(format!("Worker {}", i).to_string())
                     .spawn(move || {
@@ -170,6 +222,8 @@ impl Fuzzer {
                                 seed,
                                 execs_before_cov_update,
                                 detectors,
+                                &target_module,
+                                target_functions
                             ));
                         w.run();
                     });
@@ -199,6 +253,26 @@ impl Fuzzer {
         }
     }
 
+    fn update_ui(&mut self) {
+        if let Some(ui) = &mut self.ui {
+            if self.use_state {
+                ui.set_target_infos(
+                    &self.target_module,
+                    &self.target_functions.clone().unwrap().join(", "),
+                    &self.target_parameters,
+                    self.max_coverage,
+                );
+            } else {
+                ui.set_target_infos(
+                    &self.target_module,
+                    &self.target_function.clone().unwrap(),
+                    &self.target_parameters,
+                    self.max_coverage,
+                );
+            }
+        }
+    }
+
     pub fn run(&mut self) {
         // Init workers
         if self.use_state {
@@ -212,15 +286,6 @@ impl Fuzzer {
 
         let mut events = VecDeque::new();
 
-        if let Some(ui) = &mut self.ui {
-            ui.set_target_infos(
-                &self.target_module,
-                &self.target_function,
-                &self.target_parameters,
-                self.max_coverage,
-            );
-        }
-
         let mut new_crash: Option<Crash> = None;
 
         // Create events for loaded corpus
@@ -233,6 +298,10 @@ impl Fuzzer {
         }
 
         loop {
+
+            // Update ui infos
+            self.update_ui();
+
             // Sum execs
             self.global_stats.execs = self.get_global_execs();
             self.global_stats.crashes = self.get_global_crashes();
@@ -284,8 +353,8 @@ impl Fuzzer {
                                 }
                             }
                         }
-                        WorkerEvent::NewCrash(inputs, error) => {
-                            let crash = Crash::new(&self.target_module, &self.target_function, &inputs, &error);
+                        WorkerEvent::NewCrash(target_function, inputs, error) => {
+                            let crash = Crash::new(&self.target_module, &target_function, &inputs, &error);
                             let mut message = format!("{} - already exists, skipping", Parameters(inputs.clone()));
                             if !self.unique_crashes_set.contains(&crash) {
                                 write_crashfile(&self.config.crashes_dir, crash.clone());

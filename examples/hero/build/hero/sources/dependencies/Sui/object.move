@@ -8,11 +8,13 @@ module sui::object {
     use sui::tx_context::{Self, TxContext};
 
     friend sui::clock;
+    friend sui::coin;
     friend sui::dynamic_field;
     friend sui::dynamic_object_field;
     friend sui::transfer;
     friend sui::authenticator_state;
     friend sui::random;
+    friend sui::deny_list;
 
     #[test_only]
     friend sui::test_scenario;
@@ -28,6 +30,9 @@ module sui::object {
 
     /// The hardcoded ID for the singleton Random Object.
     const SUI_RANDOM_ID: address = @0x8;
+
+    /// The hardcoded ID for the singleton DenyList.
+    const SUI_DENY_LIST_OBJECT_ID: address = @0x403;
 
     /// Sender is not @0x0 the system address.
     const ENotSystemAddress: u64 = 0;
@@ -111,6 +116,14 @@ module sui::object {
     public(friend) fun randomness_state(): UID {
         UID {
             id: ID { bytes: SUI_RANDOM_ID }
+        }
+    }
+
+    /// Create the `UID` for the singleton `DenyList` object.
+    /// This should only be called once from `coin`.
+    public(friend) fun sui_deny_list_object_id(): UID {
+        UID {
+            id: ID { bytes: SUI_DENY_LIST_OBJECT_ID }
         }
     }
 
@@ -206,7 +219,7 @@ module sui::object {
 
     #[verify_only]
     /// Ownership information for a given object (stored at the object's address)
-    struct Ownership has key {
+    struct Ownership {
         owner: address, // only matters if status == OWNED
         status: u64,
     }
@@ -214,7 +227,7 @@ module sui::object {
     #[verify_only]
     /// List of fields with a given name type of an object containing fields (stored at the
     /// containing object's address)
-    struct DynamicFields<K: copy + drop + store> has key {
+    struct DynamicFields<K: copy + drop + store> {
         names: vector<K>,
     }
 

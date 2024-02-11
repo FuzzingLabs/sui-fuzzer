@@ -27,7 +27,7 @@ struct Args {
     target_module: Option<String>,
 
     /// The function to target
-    #[arg(long, required_unless_present_any = ["list_functions", "replay"])]
+    #[arg(long, required_unless_present_any = ["list_functions", "replay", "functions"])]
     target_function: Option<String>,
 
     /// Detectors to use
@@ -43,7 +43,7 @@ struct Args {
     replay: Option<String>,
 
     /// Functions to fuzz statefully
-    #[arg(short, long)]
+    #[arg(short, long, value_parser, num_args = 1.., value_delimiter = ',')]
     functions: Option<Vec<String>>,
 }
 
@@ -72,28 +72,24 @@ fn main() {
         }
     } else if args.config_path != "" {
         if let Some(target_module) = args.target_module {
-            if let Some(target_function) = args.target_function {
-                if let Some(_functions) = args.functions {
-                    // Stateful
-                    let mut fuzzer = Fuzzer::new(
-                        config,
-                        &target_module,
-                        &target_function,
-                        args.detectors.as_ref(),
-                        true
-                    );
-                    fuzzer.run();
-                } else {
-                    // Stateless
-                    let mut fuzzer = Fuzzer::new(
-                        config,
-                        &target_module,
-                        &target_function,
-                        args.detectors.as_ref(),
-                        false
-                    );
-                    fuzzer.run();
-                }
+            if let Some(functions) = args.functions {
+                // Stateful
+                let mut fuzzer = Fuzzer::new_stateful(
+                    config,
+                    &target_module,
+                    &functions,
+                    args.detectors.as_ref(),
+                );
+                fuzzer.run();
+            } else if let Some(target_function) = args.target_function {
+                // Stateless
+                let mut fuzzer = Fuzzer::new_stateless(
+                    config,
+                    &target_module,
+                    &target_function,
+                    args.detectors.as_ref(),
+                );
+                fuzzer.run();
             }
         } else {
             if let Some(crashfile_path) = args.replay {

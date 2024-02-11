@@ -1,8 +1,9 @@
-use std::fmt::Display;
+use std::fmt::{write, Display};
 
+use enum_as_inner::EnumAsInner;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash, EnumAsInner)]
 pub enum Type {
     U8(u8),
     U16(u16),
@@ -13,6 +14,12 @@ pub enum Type {
     Bool(bool),
 
     Vector(Box<Type>, Vec<Type>),
+
+    Struct(Vec<Type>),
+
+    Reference(bool, Box<Type>),
+
+    Function(String, Vec<Type>, Option<Box<Type>>),
 }
 
 impl Display for Type {
@@ -44,6 +51,23 @@ impl Display for Type {
                 }
                 _ => todo!(),
             },
+            Type::Struct(types) => {
+                if types.is_empty() {
+                    write!(f, "Struct([])")
+                } else {
+                    write!(f, "Struct([ ").unwrap();
+                    for (i, t) in types.iter().enumerate() {
+                        eprintln!("{:?}", t);
+                        write!(f, "{}", t).unwrap();
+                        if i != types.len() - 1 {
+                            write!(f, ", ").unwrap();
+                        }
+                    }
+                    write!(f, " ])")
+                }
+            }
+            Type::Reference(b, t) => write!(f, "Reference({}, {})", b, *t),
+            _ => unimplemented!()
         }
     }
 }
@@ -52,13 +76,17 @@ pub struct Parameters(pub Vec<Type>);
 
 impl Display for Parameters {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[ ").unwrap();
-        for v in self.0.clone() {
-            write!(f, "{}", v).unwrap();
-            if v != *self.0.last().unwrap() {
-                write!(f, ", ").unwrap();
+        if self.0.is_empty() {
+            write!(f, "[]")
+        } else {
+            write!(f, "[ ").unwrap();
+            for (i, v) in self.0.clone().iter().enumerate() {
+                write!(f, "{}", v).unwrap();
+                if i != self.0.len() - 1 {
+                    write!(f, ", ").unwrap();
+                }
             }
+            write!(f, " ]")
         }
-        write!(f, " ]")
     }
 }
