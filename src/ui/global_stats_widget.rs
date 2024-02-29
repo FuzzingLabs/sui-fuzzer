@@ -15,7 +15,7 @@ impl GlobalStatsWidget {
         Self { seed, max_coverage }
     }
 
-    pub fn render<B>(&self, frame: &mut Frame<B>, area: Rect, stats: &Stats)
+    pub fn render<B>(&self, frame: &mut Frame<B>, area: Rect, stats: &Stats, use_state: bool)
     where
         B: Backend,
     {
@@ -28,10 +28,14 @@ impl GlobalStatsWidget {
             text::Line::from(format!("Unique crashes: {}", stats.unique_crashes)),
             text::Line::from(format!("Total execs: {}", stats.execs)),
             text::Line::from(format!("Execs/s: {}", stats.execs_per_sec)),
-            text::Line::from(format!(
-                "Coverage: {}/{}",
-                stats.coverage_size, self.max_coverage
-            )),
+            if use_state == false {
+                text::Line::from(format!(
+                    "Coverage: {}/{}",
+                    stats.coverage_size, self.max_coverage
+                ))
+            } else {
+                text::Line::from("Coverage: N/A")
+            },
             text::Line::from(format!(
                 "Running for: {}d {}h {}m {}s",
                 running_duration.whole_days(),

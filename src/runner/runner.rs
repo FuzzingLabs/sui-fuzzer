@@ -4,7 +4,8 @@ use crate::mutator::types::Type;
 
 pub trait Runner {
     /// Runs the selected target
-    fn execute(&mut self, inputs: Vec<Type>) -> Result<Option<Coverage>, (Option<Coverage>, Error)>;
+    fn execute(&mut self, inputs: Vec<Type>)
+        -> Result<Option<Coverage>, (Option<Coverage>, Error)>;
     /// Sets the target function
     fn set_target_function(&mut self, function: &Type);
     /// Returns the target parameters
@@ -15,4 +16,8 @@ pub trait Runner {
     fn get_target_function(&self) -> Type;
     /// Returns the max coverage
     fn get_max_coverage(&self) -> usize;
+}
+
+pub trait StatefulRunner: Runner {
+    fn setup(&mut self);
 }

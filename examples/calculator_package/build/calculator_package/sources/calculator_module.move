@@ -26,7 +26,7 @@ module calculator_package::calculator_module {
   }
 
   public fun fuzz_check(calc: &mut Calc, _ctx: &mut TxContext) {
-    assert!(calc.sum == 3, calc.sum);
+    assert!(calc.sum == 42, calc.sum);
   }
 
 }

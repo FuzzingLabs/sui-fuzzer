@@ -11,8 +11,13 @@ impl WorkerStatsWidget {
         Self {}
     }
 
-    pub fn render<B>(&self, frame: &mut Frame<B>, area: Rect, index: usize, stats: &Arc<RwLock<Stats>>)
-    where
+    pub fn render<B>(
+        &self,
+        frame: &mut Frame<B>,
+        area: Rect,
+        index: usize,
+        stats: &Arc<RwLock<Stats>>,
+    ) where
         B: Backend,
     {
         let worker_stats_block = Block::default().borders(Borders::ALL).title(Span::styled(

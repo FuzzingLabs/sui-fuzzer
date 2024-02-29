@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'fuzzer'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=fuzzer",
+                    "--package=fuzzer"
+                ],
+                "filter": {
+                    "name": "fuzzer",
+                    "kind": "bin"
+                }
+            },
+            "args": ["--config-path",  "/home/tanguy/Documents/sui/fuzzer/config.json", "--target-module", "calculator_module", "--functions", "add,sub"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'fuzzer'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=fuzzer",
+                    "--package=fuzzer"
+                ],
+                "filter": {
+                    "name": "fuzzer",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

@@ -22,8 +22,8 @@ use crate::mutator::sui_mutator::SuiMutator;
 use crate::worker::worker::Worker;
 use crate::worker::worker::WorkerEvent;
 use crate::worker::stateless_worker::StatelessWorker;
-use crate::runner::stateless_runner::sui_runner::SuiRunner as StatelessSuiRunner;
 use crate::runner::stateful_runner::sui_runner::SuiRunner as StatefulSuiRunner;
+use crate::runner::stateless_runner::sui_runner::SuiRunner as StatelessSuiRunner;
 
 use super::crash::Crash;
 use super::fuzzer_utils::load_corpus;
@@ -172,7 +172,7 @@ impl Fuzzer {
 
     fn build_test_modules(test_dir: &str) -> (Vec<u8>, Vec<Vec<u8>>) {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.extend(["data", test_dir]);
+        path.extend([test_dir]);
         let with_unpublished_deps = false;
         let config = BuildConfig::new_for_testing();
         let package = config.build(path).unwrap();
@@ -184,7 +184,7 @@ impl Fuzzer {
 
     fn start_stateful_threads(&mut self) {
 
-        let (_, modules) = Self::build_test_modules("/home/tanguy/Documents/sui/fuzzer/examples/calculator_package");
+        let (_, modules) = Self::build_test_modules(self.config.contract.as_ref().unwrap());
 
         for i in 0..self.config.nb_threads {
             // Creates the communication channel for the fuzzer and worker sides
@@ -193,42 +193,39 @@ impl Fuzzer {
             let stats = Arc::new(RwLock::new(Stats::new()));
             self.threads_stats.push(stats.clone());
             // Change here the runner you want to create
-            if let Some(parameter) = &self.config.contract {
-                // Creates the sui runner with the runner parameter found in the config
-                let runner = Box::new(StatefulSuiRunner::new(
-                        &parameter.clone(),
-                        &self.target_module,
-                        modules.clone()
-                    ));
-                self.max_coverage = runner.get_max_coverage();
-                // Increment seed so that each worker doesn't do the same thing
-                let seed = self.config.seed.unwrap() + (i as u64);
-                let execs_before_cov_update = self.config.execs_before_cov_update;
-                let mutator = Box::new(SuiMutator::new(seed, 12));
-                let detectors = self.detectors.clone();
-                let coverage_set = self.coverage_set.clone();
-                let target_module = self.target_module.clone();
-                let target_functions = self.target_functions.clone().unwrap();
-                let _ = std::thread::Builder::new()
-                    .name(format!("Worker {}", i).to_string())
-                    .spawn(move || {
-                        // Creates generic worker and starts it
-                        let mut w = Box::new(StatefulWorker::new(
-                                worker,
-                                stats,
-                                coverage_set,
-                                runner,
-                                mutator,
-                                seed,
-                                execs_before_cov_update,
-                                detectors,
-                                &target_module,
-                                target_functions
-                            ));
-                        w.run();
-                    });
+            let runner = Box::new(StatefulSuiRunner::new(
+                    &self.target_module,
+                    modules.clone(),
+                ));
+            self.max_coverage = runner.get_max_coverage();
+            // Increment seed so that each worker doesn't do the same thing
+            let seed = self.config.seed.unwrap() + (i as u64);
+            let execs_before_cov_update = self.config.execs_before_cov_update;
+            let mutator = Box::new(SuiMutator::new(seed, 12));
+            let detectors = self.detectors.clone();
+            let coverage_set = self.coverage_set.clone();
+            let target_module = self.target_module.clone();
+            let target_functions = self.target_functions.clone().unwrap();
+            let contract = self.config.contract.clone().unwrap();
+            let _ = std::thread::Builder::new()
+                .name(format!("Worker {}", i).to_string())
+                .spawn(move || {
+                    // Creates generic worker and starts it
+                    let mut w = Box::new(StatefulWorker::new(
+                            &contract,
+                            worker,
+                            stats,
+                            coverage_set,
+                            runner,
+                            mutator,
+                            execs_before_cov_update,
+                            detectors,
+                            &target_module,
+                            target_functions
+                        ));
+                    w.run();
+                });
             }
-        }
     }
 
     fn get_global_execs(&self) -> u64 {
@@ -363,11 +360,13 @@ impl Fuzzer {
                                 message = format!("{} - NEW", Parameters(inputs));
                                 new_crash = Some(crash);
                             }
-                            events.push_front(UiEvent::NewCrash(UiEventData {
-                                time: duration,
-                                message,
-                                error: Some(error),
-                            }));
+                            if self.use_state == false || !message.ends_with("skipping") {
+                                events.push_front(UiEvent::NewCrash(UiEventData {
+                                    time: duration,
+                                    message,
+                                    error: Some(error),
+                                }));
+                            }
                         }
                         WorkerEvent::DetectorTriggered(detector, message) => {
                             let mut final_message = format!("{:?}", detector);
@@ -397,8 +396,8 @@ impl Fuzzer {
                     &self.global_stats,
                     &mut events,
                     &self.threads_stats,
-                    &self.detectors
-                    
+                    &self.detectors,
+                    self.use_state
                 ) {
                     self.ui.as_mut().unwrap().restore_terminal();
                     eprintln!("Quitting...");

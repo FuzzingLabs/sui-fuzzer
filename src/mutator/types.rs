@@ -1,4 +1,4 @@
-use std::fmt::{write, Display};
+use std::fmt::Display;
 
 use enum_as_inner::EnumAsInner;
 use serde::{Deserialize, Serialize};
@@ -67,7 +67,7 @@ impl Display for Type {
                 }
             }
             Type::Reference(b, t) => write!(f, "Reference({}, {})", b, *t),
-            _ => unimplemented!()
+            _ => unimplemented!(),
         }
     }
 }

@@ -9,10 +9,11 @@ use move_model::ty::Type;
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
-    detector::detector::{AvailableDetector, Detector},
+    detector::detector::AvailableDetector,
     fuzzer::{coverage::Coverage, crash::Crash, stats::Stats},
-    mutator::{mutator::Mutator, rng::Rng, types::Type as FuzzerType},
-    runner::{runner::Runner, stateless_runner::sui_runner_utils::generate_abi_from_source},
+    mutator::{mutator::Mutator, types::Type as FuzzerType},
+    runner::runner::StatefulRunner,
+    runner::stateless_runner::sui_runner_utils::generate_abi_from_source,
     worker::worker::WorkerEvent,
 };
 
@@ -24,25 +25,21 @@ const STATE_INIT_POSTFIX: &str = "init";
 pub struct StatefulWorker {
     channel: Channel<WorkerEvent, WorkerEvent>,
     stats: Arc<RwLock<Stats>>,
-    runner: Box<dyn Runner>,
+    runner: Box<dyn StatefulRunner>,
     mutator: Box<dyn Mutator>,
-    rng: Rng,
-    detectors: Vec<Box<dyn Detector>>,
-    coverage_set: HashSet<Coverage>,
     unique_crashes_set: HashSet<Crash>,
-    seed: u64,
     // Available functions
     target_functions: Vec<FuzzerType>,
 }
 
 impl StatefulWorker {
     pub fn new(
+        contract: &str,
         channel: Channel<WorkerEvent, WorkerEvent>,
         stats: Arc<RwLock<Stats>>,
         _coverage_set: HashSet<Coverage>,
-        runner: Box<dyn Runner>,
+        runner: Box<dyn StatefulRunner>,
         mutator: Box<dyn Mutator>,
-        seed: u64,
         _execs_before_cov_update: u64,
         _available_detectors: Option<Vec<AvailableDetector>>,
         target_module: &str,
@@ -50,11 +47,8 @@ impl StatefulWorker {
     ) -> Self {
         let mut functions = vec![];
         for target_function in &target_functions {
-            let (parameters, _) = generate_abi_from_source(
-                "/home/tanguy/Documents/sui/fuzzer/examples/calculator_package",
-                target_module,
-                target_function,
-            );
+            let (parameters, _) =
+                generate_abi_from_source(contract, target_module, target_function);
             functions.push(FuzzerType::Function(
                 target_function.clone(),
                 Self::transform_params(parameters),
@@ -67,14 +61,7 @@ impl StatefulWorker {
             stats,
             runner,
             mutator,
-            seed,
-            rng: Rng {
-                seed,
-                exp_disabled: false,
-            },
-            detectors: vec![],
             target_functions: functions,
-            coverage_set: HashSet::new(),
             unique_crashes_set: HashSet::new(),
         }
     }
@@ -87,12 +74,18 @@ impl StatefulWorker {
         res
     }
 
-    fn generate_call_sequence(&self) -> Vec<FuzzerType> {
+    fn generate_call_sequence(&self, size: u32) -> Vec<FuzzerType> {
         let mut target_functions = self.target_functions.clone();
-        let mut call_sequence: Vec<FuzzerType> =
-            vec![FuzzerType::Function("fuzz_check".to_string(), vec![], None)];
+        let mut call_sequence: Vec<FuzzerType> = vec![FuzzerType::Function(
+            "fuzz_check".to_string(),
+            vec![
+                FuzzerType::Reference(false, Box::new(FuzzerType::Struct(vec![]))),
+                FuzzerType::Reference(false, Box::new(FuzzerType::Struct(vec![]))),
+            ],
+            None,
+        )];
         call_sequence.append(&mut target_functions);
-        for _ in 0..10 {
+        for _ in 0..size {
             let n = self
                 .mutator
                 .generate_number(0, (call_sequence.len() - 1).try_into().unwrap());
@@ -110,12 +103,11 @@ impl Worker for StatefulWorker {
         let mut sec_elapsed = 0;
 
         loop {
-            let call_sequence = self.generate_call_sequence();
-
-            eprintln!("{:?}", call_sequence);
+            let call_sequence = self.generate_call_sequence(5);
 
             // Call each function in the call sequence
             for function in call_sequence {
+                // Reset function
                 self.runner.set_target_function(&function);
 
                 // Input initialization
@@ -124,7 +116,7 @@ impl Worker for StatefulWorker {
                 // Mutate inputs
                 inputs = self.mutator.mutate(&inputs, 4);
 
-                eprintln!("{} {:?}", function.as_function().unwrap().0, inputs);
+                //eprintln!("{} {:?}", function.as_function().unwrap().0, inputs);
 
                 let exec_result = self.runner.execute(inputs.clone());
 
@@ -166,6 +158,9 @@ impl Worker for StatefulWorker {
                     }
                 }
             }
+
+            // Reset state
+            self.runner.setup();
         }
     }
 }

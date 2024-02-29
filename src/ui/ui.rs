@@ -109,6 +109,7 @@ impl Ui {
         mut events: &mut VecDeque<UiEvent>,
         threads_stats: &Vec<Arc<RwLock<Stats>>>,
         detectors: &Option<Vec<AvailableDetector>>,
+        use_state: bool
     ) -> bool {
         self.terminal
             .draw(|frame| {
@@ -136,6 +137,7 @@ impl Ui {
                         self.threads_stats_idx,
                         threads_stats,
                         detectors,
+                        use_state
                     );
                 }
                 frame.render_widget(stats_block, chunks[0]);

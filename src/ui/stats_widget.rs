@@ -48,6 +48,7 @@ impl StatsWidget {
         threads_stats_idx: usize,
         threads_stats: &Vec<Arc<RwLock<Stats>>>,
         detectors: &Option<Vec<AvailableDetector>>,
+        use_state: bool,
     ) where
         B: Backend,
     {
@@ -74,7 +75,7 @@ impl StatsWidget {
 
         // Render global stats widget
         self.global_stats_widget
-            .render(frame, rects_stats_global_worker[0], stats);
+            .render(frame, rects_stats_global_worker[0], stats, use_state);
 
         // Render worker stats widget
         self.worker_widget.render(
