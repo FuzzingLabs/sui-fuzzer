@@ -109,7 +109,7 @@ impl GraphsWidget {
         let binding2 = ((max / 2.0) as u64).to_string();
         let binding_mid = binding2.bold();
         let binding3 = (min as u64).to_string();
-        let binding_min = binding3.bold();
+        let _binding_min = binding3.bold();
         let chart = Chart::new(datasets)
             .x_axis(
                 Axis::default()
