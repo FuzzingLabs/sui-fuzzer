@@ -102,18 +102,11 @@ module sui::random {
         // Randomness should only be incremented.
         let epoch = tx_context::epoch(ctx);
         let inner = load_inner_mut(self);
-        if (inner.randomness_round == 0 && inner.epoch == 0 &&
-                vector::is_empty(&inner.random_bytes)) {
-            // First update should be for round zero.
-            assert!(new_round == 0, EInvalidRandomnessUpdate);
-        } else {
-            // Subsequent updates should increment either epoch or randomness_round.
-            assert!(
-                (epoch == inner.epoch + 1 && new_round == 0) ||
-                    (new_round == inner.randomness_round + 1),
-                EInvalidRandomnessUpdate
-            );
-        };
+        assert!(
+            (epoch == inner.epoch + 1 && inner.randomness_round == 0) ||
+                (new_round == inner.randomness_round + 1),
+            EInvalidRandomnessUpdate
+        );
 
         inner.epoch = tx_context::epoch(ctx);
         inner.randomness_round = new_round;

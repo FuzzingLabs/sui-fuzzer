@@ -206,7 +206,9 @@ impl Fuzzer {
             let coverage_set = self.coverage_set.clone();
             let target_module = self.target_module.clone();
             let target_functions = self.target_functions.clone().unwrap();
+            let fuzz_prefix = self.config.fuzz_functions_prefix .clone();
             let contract = self.config.contract.clone().unwrap();
+            let max_call_sequence_size = self.config.max_call_sequence_size;
             let _ = std::thread::Builder::new()
                 .name(format!("Worker {}", i).to_string())
                 .spawn(move || {
@@ -219,9 +221,12 @@ impl Fuzzer {
                             runner,
                             mutator,
                             execs_before_cov_update,
+                            seed,
                             detectors,
                             &target_module,
-                            target_functions
+                            target_functions,
+                            fuzz_prefix,
+                            max_call_sequence_size
                         ));
                     w.run();
                 });

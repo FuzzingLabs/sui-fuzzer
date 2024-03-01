@@ -41,7 +41,8 @@ To do so you need to edit the *config.json* file (or create a new file) located 
   "execs_before_cov_update": 10000, // When the coverage is shared between the threads (don't modify if you don't know why)
   "corpus_dir": "./corpus", // Path to where the corpus will be written (milestone 3)
   "crashes_dir": "./crashes", // Path to where the crashfiles will be written
-  "fuzz_functions_prefix": "fuzz_" // Fuzzing functions prefix (can be listed by the fuzzer)
+  "fuzz_functions_prefix": "fuzz_", // Fuzzing functions prefix (can be listed by the fuzzer)
+  "max_call_sequence_size": 5 // Maximum size of a generated call sequence (only for stateful fuzzing)
 }
 ```
 Edit the file to meet your needs.

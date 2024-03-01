@@ -67,9 +67,10 @@ Here is an example of config:
   "seed": 4242, // The inital seed
   "contract": "./examples/fuzzinglabs_package/build/fuzzinglabs_package/bytecode_modules/fuzzinglabs_module.mv", // The path to the compiled module / package
   "execs_before_cov_update": 10000, // When the coverage is shared between the threads (don't modify if you don't know why)
-  "corpus_dir": "./corpus", // Path to where the corpus will be written (milestone 3)
-  "crashes_dir": "./crashes", // Path to where the crashfiles will be written
-  "fuzz_functions_prefix": "fuzz_" // Fuzzing functions prefix (can be listed by the fuzzer)
+  "corpus_dir": "./corpus", // Path to where the corpus are written
+  "crashes_dir": "./crashes", // Path to where the crashfiles are written
+  "fuzz_functions_prefix": "fuzz_", // Fuzzing functions prefix (can be listed by the fuzzer)
+  "max_call_sequence_size": 5 // Maximum size of a generated call sequence (only for stateful fuzzing)
 }
 ```
 

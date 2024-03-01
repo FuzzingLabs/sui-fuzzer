@@ -93,7 +93,9 @@ impl StatsWidget {
             .render(frame, rects_global_stats_detector[1], detectors);
 
         // Render graph widget
-        self.graphs_widget
-            .render(frame, chunks[1], stats, tab_index);
+        if use_state == false {
+            self.graphs_widget
+                .render(frame, chunks[1], stats, tab_index);
+        }
     }
 }

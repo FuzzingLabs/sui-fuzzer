@@ -11,9 +11,13 @@ use rand::{seq::SliceRandom, thread_rng};
 use crate::{
     detector::detector::AvailableDetector,
     fuzzer::{coverage::Coverage, crash::Crash, stats::Stats},
-    mutator::{mutator::Mutator, types::Type as FuzzerType},
-    runner::runner::StatefulRunner,
-    runner::stateless_runner::sui_runner_utils::generate_abi_from_source,
+    mutator::{mutator::Mutator, rng::Rng, types::Type as FuzzerType},
+    runner::{
+        runner::StatefulRunner,
+        stateless_runner::sui_runner_utils::{
+            generate_abi_from_source, generate_abi_from_source_starts_with,
+        },
+    },
     worker::worker::WorkerEvent,
 };
 
@@ -27,9 +31,12 @@ pub struct StatefulWorker {
     stats: Arc<RwLock<Stats>>,
     runner: Box<dyn StatefulRunner>,
     mutator: Box<dyn Mutator>,
+    rng: Rng,
     unique_crashes_set: HashSet<Crash>,
     // Available functions
     target_functions: Vec<FuzzerType>,
+    fuzz_functions: Vec<FuzzerType>,
+    max_call_sequence_size: u32,
 }
 
 impl StatefulWorker {
@@ -40,11 +47,15 @@ impl StatefulWorker {
         _coverage_set: HashSet<Coverage>,
         runner: Box<dyn StatefulRunner>,
         mutator: Box<dyn Mutator>,
+        seed: u64,
         _execs_before_cov_update: u64,
         _available_detectors: Option<Vec<AvailableDetector>>,
         target_module: &str,
         target_functions: Vec<String>,
+        fuzz_prefix: String,
+        max_call_sequence_size: u32,
     ) -> Self {
+        // Gets info on targeted functions
         let mut functions = vec![];
         for target_function in &target_functions {
             let (parameters, _) =
@@ -56,13 +67,35 @@ impl StatefulWorker {
             ));
         }
 
+        // Gets info on fuzz functions
+        let mut fuzz_functions = vec![];
+        let mut functions_abi =
+            generate_abi_from_source_starts_with(contract, target_module, &fuzz_prefix);
+        // Removes fuzz_init
+        if let Some(pos) = functions_abi.iter().position(|f| f.0 == "fuzz_init") {
+            functions_abi.remove(pos);
+        }
+        for (function_name, parameters) in functions_abi {
+            fuzz_functions.push(FuzzerType::Function(
+                function_name,
+                Self::transform_params(parameters),
+                None,
+            ));
+        }
+
         StatefulWorker {
             channel,
             stats,
             runner,
             mutator,
+            rng: Rng {
+                seed,
+                exp_disabled: false,
+            },
             target_functions: functions,
+            fuzz_functions: fuzz_functions,
             unique_crashes_set: HashSet::new(),
+            max_call_sequence_size,
         }
     }
 
@@ -76,14 +109,8 @@ impl StatefulWorker {
 
     fn generate_call_sequence(&self, size: u32) -> Vec<FuzzerType> {
         let mut target_functions = self.target_functions.clone();
-        let mut call_sequence: Vec<FuzzerType> = vec![FuzzerType::Function(
-            "fuzz_check".to_string(),
-            vec![
-                FuzzerType::Reference(false, Box::new(FuzzerType::Struct(vec![]))),
-                FuzzerType::Reference(false, Box::new(FuzzerType::Struct(vec![]))),
-            ],
-            None,
-        )];
+        let mut call_sequence: Vec<FuzzerType> =
+            Vec::from_iter(self.fuzz_functions.iter().cloned());
         call_sequence.append(&mut target_functions);
         for _ in 0..size {
             let n = self
@@ -103,7 +130,12 @@ impl Worker for StatefulWorker {
         let mut sec_elapsed = 0;
 
         loop {
-            let call_sequence = self.generate_call_sequence(5);
+            let call_sequence_size = self
+                .rng
+                .rand(1, self.max_call_sequence_size.try_into().unwrap())
+                .try_into()
+                .unwrap();
+            let call_sequence = self.generate_call_sequence(call_sequence_size);
 
             // Call each function in the call sequence
             for function in call_sequence {

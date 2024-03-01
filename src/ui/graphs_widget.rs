@@ -121,8 +121,8 @@ impl GraphsWidget {
             .y_axis(
                 Axis::default()
                     .style(Style::default().fg(Color::Gray))
-                    .labels(vec![binding_min, binding_mid, binding_max])
-                    .bounds([min, max]),
+                    .labels(vec![Span::from("0"), binding_mid, binding_max])
+                    .bounds([0.0, max]),
             );
         frame.render_widget(chart, area);
     }

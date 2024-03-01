@@ -8,5 +8,6 @@
   "execs_before_cov_update": 10000,
   "corpus_dir": "./corpus",
   "crashes_dir": "./crashes",
-  "fuzz_functions_prefix": "fuzz_"
+  "fuzz_functions_prefix": "fuzz_",
+  "max_call_sequence_size": 5
 }
