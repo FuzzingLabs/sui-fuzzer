@@ -1,8 +1,6 @@
 use ratatui::{prelude::*, widgets::*};
-
 #[cfg(target_os = "linux")]
 use memory_stats::memory_stats;
-
 use crate::fuzzer::stats::Stats;
 
 pub struct GlobalStatsWidget {

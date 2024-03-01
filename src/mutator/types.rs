@@ -1,5 +1,4 @@
 use std::fmt::Display;
-
 use enum_as_inner::EnumAsInner;
 use serde::{Deserialize, Serialize};
 

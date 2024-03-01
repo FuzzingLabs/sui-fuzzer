@@ -1,7 +1,5 @@
 use std::hash::{Hash, Hasher};
-
 use serde::{Serialize, Deserialize};
-
 use crate::mutator::types::Type;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

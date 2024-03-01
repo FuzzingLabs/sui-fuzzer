@@ -11,10 +11,8 @@ use std::io;
 use std::io::Stdout;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
-
 use crate::{detector::detector::AvailableDetector, fuzzer::stats::Stats};
 use crate::{fuzzer::error::Error, mutator::types::Type};
-
 use super::{events_widget::EventsWidget, stats_widget::StatsWidget};
 
 #[derive(Debug, Clone)]

@@ -7,7 +7,6 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::time::Instant;
 use time::Duration;
-
 use crate::fuzzer::config::Config;
 use crate::fuzzer::coverage::Coverage;
 use crate::fuzzer::stats::Stats;
@@ -24,7 +23,6 @@ use crate::worker::worker::WorkerEvent;
 use crate::worker::stateless_worker::StatelessWorker;
 use crate::runner::stateful_runner::sui_runner::SuiRunner as StatefulSuiRunner;
 use crate::runner::stateless_runner::sui_runner::SuiRunner as StatelessSuiRunner;
-
 use super::crash::Crash;
 use super::fuzzer_utils::load_corpus;
 use super::fuzzer_utils::load_crashes;

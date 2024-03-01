@@ -1,9 +1,6 @@
 use std::hash::{Hash, Hasher};
-
 use serde::{Deserialize, Serialize};
-
 use crate::mutator::types::Type;
-
 use super::error::Error;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq)]

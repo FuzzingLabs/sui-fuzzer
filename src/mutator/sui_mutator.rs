@@ -1,6 +1,5 @@
 use crate::mutator::mutator::Mutator;
 use basic_mutator::{self, EmptyDatabase};
-
 use super::{rng::Rng, types::Type};
 
 pub struct SuiMutator {

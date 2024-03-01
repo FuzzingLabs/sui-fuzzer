@@ -1,7 +1,5 @@
 use std::sync::{Arc, RwLock};
-
 use ratatui::{prelude::*, widgets::*};
-
 use crate::fuzzer::stats::Stats;
 
 pub struct WorkerStatsWidget {}

@@ -4,11 +4,8 @@ use std::{
     io::Write,
     time::SystemTime,
 };
-
 use chrono::{DateTime, Utc};
-
 use crate::runner::{runner::Runner, stateless_runner::sui_runner::SuiRunner};
-
 use super::{config::Config, coverage::Coverage, crash::Crash};
 
 pub fn write_crashfile(path: &str, crash: Crash) {

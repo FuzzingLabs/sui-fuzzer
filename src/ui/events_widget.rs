@@ -1,7 +1,5 @@
 use std::collections::VecDeque;
-
 use ratatui::{prelude::*, widgets::*};
-
 use super::{ui::UiEvent, utils::create_event_item};
 
 pub struct EventsWidget {

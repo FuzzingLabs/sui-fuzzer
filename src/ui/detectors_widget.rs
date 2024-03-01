@@ -1,6 +1,5 @@
 use itertools::Itertools;
 use ratatui::{prelude::*, widgets::*};
-
 use crate::detector::detector::AvailableDetector;
 
 pub struct DetectorWidget {}

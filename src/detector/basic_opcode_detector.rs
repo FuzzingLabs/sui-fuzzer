@@ -1,7 +1,5 @@
 use itertools::Itertools;
-
 use crate::fuzzer::{coverage::Coverage, error::Error};
-
 use super::detector::Detector;
 
 #[derive(Default)]

@@ -1,5 +1,4 @@
 use ratatui::{prelude::*, widgets::*};
-
 use crate::fuzzer::stats::Stats;
 
 pub struct GraphsWidget {

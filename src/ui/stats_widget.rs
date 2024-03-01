@@ -1,9 +1,6 @@
 use std::sync::{Arc, RwLock};
-
 use ratatui::prelude::*;
-
 use crate::{detector::detector::AvailableDetector, fuzzer::stats::Stats, mutator::types::Type};
-
 use super::{
     detectors_widget::DetectorWidget, global_stats_widget::GlobalStatsWidget,
     graphs_widget::GraphsWidget, target_infos_widget::TargetInfosWidget,

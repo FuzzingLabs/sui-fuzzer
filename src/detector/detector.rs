@@ -1,8 +1,6 @@
 use clap::ValueEnum;
 use std::fmt::Debug;
-
 use crate::fuzzer::{coverage::Coverage, error::Error};
-
 use super::basic_opcode_detector::BasicOpCodeDetector;
 
 /// Add new detectors here

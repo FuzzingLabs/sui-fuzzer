@@ -1,5 +1,4 @@
 use ratatui::{prelude::*, widgets::*};
-
 use crate::{mutator::types::Parameters, mutator::types::Type};
 
 pub struct TargetInfosWidget {
