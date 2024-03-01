@@ -26,7 +26,7 @@ Fuzzer for Sui Move Smart Contracts.
 - [x] Improvement of contract argument generation (based on )
 - [x] Improvement of command line options
 - [x] Improvement of the fuzzing (input file sharing, mutation algorithm, speed)
-- [ ] Create more documentation & tutorials against basic/example contracts
+- [x] Create more documentation & tutorials against basic/example contracts
 
 ## Usage
 
