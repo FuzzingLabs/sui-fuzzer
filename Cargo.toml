@@ -24,7 +24,7 @@ itertools = "0.12.0"
 # Sui dependencies
 sui-move-build = { path = "./sui/crates/sui-move-build"}
 move-package = { path = "./sui/external-crates/move/crates/move-package"}
-move-vm-runtime = { path = "./sui/external-crates/move/move-execution/v0/move-vm/runtime", package = "move-vm-runtime-v0"}
+move-vm-runtime = { path = "./sui/external-crates/move/crates/move-vm-runtime"}
 move-vm-config = { path = "./sui/external-crates/move/crates/move-vm-config"}
 sui-move-natives-latest = { path = "./sui/sui-execution/latest/sui-move-natives" }
 move-vm-types = { path = "./sui/external-crates/move/crates/move-vm-types" }
