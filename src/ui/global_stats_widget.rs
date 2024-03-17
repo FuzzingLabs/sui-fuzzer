@@ -50,7 +50,7 @@ impl GlobalStatsWidget {
             )),
         ];
         // The crate for the memory doesn't work on mac
-        if cfg!(target_os = "linux") {
+        #[cfg(target_os = "linux")] {
             // Gets memory usage
             let mut mem = 0;
             if let Some(usage) = memory_stats() {
